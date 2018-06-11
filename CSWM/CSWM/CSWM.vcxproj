@@ -71,9 +71,9 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>D:\CSDS\cstrike\addons\amxmodx\modules\</OutDir>
-    <IntDir>D:\CSDS\cstrike\addons\amxmodx\modules\int_bb\</IntDir>
+    <IntDir>D:\CSDS\cstrike\addons\amxmodx\modules\int_cswm\</IntDir>
     <IncludePath>..\;..\18X;..\..\SDK\;..\..\SDK\public;..\..\SDK\public\amtl;..\..\SDK\metamod;..\..\SDK\cssdk;..\..\SDK\cssdk\public;..\..\SDK\cssdk\pm_shared;..\..\SDK\cssdk\game_shared;..\..\SDK\cssdk\engine;..\..\SDK\cssdk\dlls;..\..\SDK\cssdk\common;$(IncludePath)</IncludePath>
-    <TargetName>CSWM_amxx</TargetName>
+    <TargetName>cswm_amxx</TargetName>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -93,7 +93,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Full</Optimization>
       <SDLCheck>false</SDLCheck>
-      <PreprocessorDefinitions>BB_EXPORTS;HAVE_STDINT_H;NDEBUG;_NDEBUG;_CRT_SECURE_NO_WARNINGS;__METAMOD_BUILD__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>CSWM_EXPORTS;HAVE_STDINT_H;NDEBUG;_NDEBUG;_CRT_SECURE_NO_WARNINGS;__METAMOD_BUILD__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(IncludePath)</AdditionalIncludeDirectories>
       <ShowIncludes>false</ShowIncludes>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
@@ -102,13 +102,14 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <FloatingPointModel>Fast</FloatingPointModel>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
       <MinimalRebuild>false</MinimalRebuild>
-      <DebugInformationFormat>None</DebugInformationFormat>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
     </ClCompile>
     <Link>
       <LinkErrorReporting>NoErrorReport</LinkErrorReporting>
-      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>$(OutDir)$(TargetName).pdb</ProgramDatabaseFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -121,7 +122,6 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>false</SDLCheck>
       <DebugInformationFormat>None</DebugInformationFormat>
@@ -131,6 +131,7 @@
       <WholeProgramOptimization>true</WholeProgramOptimization>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <AssemblerOutput>NoListing</AssemblerOutput>
+      <Optimization>Full</Optimization>
     </ClCompile>
     <Link>
       <SubSystem>NotSet</SubSystem>

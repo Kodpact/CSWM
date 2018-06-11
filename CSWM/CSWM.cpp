@@ -878,7 +878,7 @@ static void __fastcall Player_TakeDamage(CBasePlayer *BasePlayer, int, entvars_t
 
 static int GetAmmoByName(const char *Name)
 {
-	for (int Index = 0; Index < MAX_AMMO_SLOTS; Index++)
+	for (size_t Index = 0; Index < Ammos.length(); Index++)
 	{
 		if (!Q_strcmp(Name, Ammos[Index].Name))
 			return Index;
