@@ -1,0 +1,185 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{88C50D10-FE42-4BE5-A9E2-9922FC3C29B8}</ProjectGuid>
+    <RootNamespace>CSWM</RootNamespace>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>NotSet</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>NotSet</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>NotSet</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>D:\CSDS\cstrike\addons\amxmodx\modules\</OutDir>
+    <IntDir>D:\CSDS\cstrike\addons\amxmodx\modules\int_bb\</IntDir>
+    <IncludePath>..\;..\18X;..\..\SDK\;..\..\SDK\public;..\..\SDK\public\amtl;..\..\SDK\metamod;..\..\SDK\cssdk;..\..\SDK\cssdk\public;..\..\SDK\cssdk\pm_shared;..\..\SDK\cssdk\game_shared;..\..\SDK\cssdk\engine;..\..\SDK\cssdk\dlls;..\..\SDK\cssdk\common;$(IncludePath)</IncludePath>
+    <TargetName>CSWM_amxx</TargetName>
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>D:\CSDS\cstrike\addons\amxmodx\modules\</OutDir>
+    <IntDir>D:\CSDS\cstrike\addons\amxmodx\modules\int_cswm\</IntDir>
+    <TargetName>cswm_amxx</TargetName>
+    <IncludePath>..\;..\18X;..\..\SDK\;..\..\SDK\public;..\..\SDK\public\amtl;..\..\SDK\metamod;..\..\SDK\cssdk;..\..\SDK\cssdk\public;..\..\SDK\cssdk\pm_shared;..\..\SDK\cssdk\game_shared;..\..\SDK\cssdk\engine;..\..\SDK\cssdk\dlls;..\..\SDK\cssdk\common;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>D:\CSDS\cstrike\addons\amxmodx\modules\</OutDir>
+    <IntDir>D:\CSDS\cstrike\addons\amxmodx\modules\int_cswm\</IntDir>
+    <TargetName>cswm_amxx</TargetName>
+    <IncludePath>..\;..\18X;..\..\SDK\;..\..\SDK\public;..\..\SDK\public\amtl;..\..\SDK\metamod;..\..\SDK\cssdk;..\..\SDK\cssdk\public;..\..\SDK\cssdk\pm_shared;..\..\SDK\cssdk\game_shared;..\..\SDK\cssdk\engine;..\..\SDK\cssdk\dlls;..\..\SDK\cssdk\common;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Full</Optimization>
+      <SDLCheck>false</SDLCheck>
+      <PreprocessorDefinitions>BB_EXPORTS;HAVE_STDINT_H;NDEBUG;_NDEBUG;_CRT_SECURE_NO_WARNINGS;__METAMOD_BUILD__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(IncludePath)</AdditionalIncludeDirectories>
+      <ShowIncludes>false</ShowIncludes>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
+      <ExceptionHandling>false</ExceptionHandling>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <MinimalRebuild>false</MinimalRebuild>
+      <DebugInformationFormat>None</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <LinkErrorReporting>NoErrorReport</LinkErrorReporting>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>false</SDLCheck>
+      <DebugInformationFormat>None</DebugInformationFormat>
+      <ErrorReporting>None</ErrorReporting>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(IncludePath)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>CSWM_EXPORTS;__METAMOD_BUILD__;HAVE_STDINT_H;NDEBUG;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <AssemblerOutput>NoListing</AssemblerOutput>
+    </ClCompile>
+    <Link>
+      <SubSystem>NotSet</SubSystem>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <LinkErrorReporting>NoErrorReport</LinkErrorReporting>
+      <AssemblyDebug>false</AssemblyDebug>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <DebugInformationFormat>None</DebugInformationFormat>
+      <PreprocessorDefinitions>CSWM_EXPORTS;__METAMOD_BUILD__;HAVE_STDINT_H;NDEBUG;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(IncludePath)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\SDK\182\amxxmodule.h" />
+    <ClInclude Include="..\18X\Config.h" />
+    <ClInclude Include="..\Attack2.h" />
+    <ClInclude Include="..\CONST.h" />
+    <ClInclude Include="..\CPlayer.h" />
+    <ClInclude Include="..\CStrike.h" />
+    <ClInclude Include="..\CstrikeUtils.h" />
+    <ClInclude Include="..\CSWM.h" />
+    <ClInclude Include="..\FakeCMD.h" />
+    <ClInclude Include="..\HLSDK.h" />
+    <ClInclude Include="..\Module.h" />
+    <ClInclude Include="..\PData.h" />
+    <ClInclude Include="..\TraceAttack.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\SDK\182\AMXX182.cpp" />
+    <ClCompile Include="..\CSWM.cpp" />
+    <ClCompile Include="..\FakeCMD.cpp" />
+    <ClCompile Include="..\HEFW.cpp" />
+    <ClCompile Include="..\Module.cpp" />
+    <ClCompile Include="..\TraceAttack.cpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
