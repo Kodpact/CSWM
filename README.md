@@ -1,6 +1,6 @@
 # [CSWM](https://forums.alliedmods.net/showthread.php?t=308229)
 
-
+Counter-Strike weapon mod (:gun:). Adds infinite amount of weapons.
 
 # Building CSWM
 
