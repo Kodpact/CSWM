@@ -4,7 +4,7 @@ Counter-Strike weapon mod (:gun:). Adds infinite amount of weapons.
 
 # Changelog
 
-> 1.44 > 1.45
+> 1.44 => 1.45
 - Fixed death was crashing the game.
 
 # Building CSWM
