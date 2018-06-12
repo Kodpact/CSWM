@@ -240,7 +240,7 @@ void ServerActivate_Post(edict_t *pEdictList, int edictCount, int clientMax)
 	{
 		CWeapon *Weapon = &Weapons[Index];
 		II.pszName = GetWeaponName(Weapon->ID); //Weapon->Name;
-		II.pszAmmo1 = '\0'; // Ammos[Weapon->AmmoID].Name;
+		II.pszAmmo1 = "\0"; // Ammos[Weapon->AmmoID].Name;
 		II.iMaxAmmo1 = Ammos[Weapon->AmmoID].Max;
 		II.pszAmmo2 = nullptr;
 		II.iMaxAmmo2 = -1;
@@ -311,6 +311,7 @@ void OnPluginsUnloaded(void)
 
 	ResetEntityFW("player", EO_TakeDamage, Player_TakeDamage, FPlayer_TakeDamage);
 	ResetEntityFW("player", EO_GiveAmmo, Player_GiveAmmo, FPlayer_GiveAmmo);
+	ResetEntityFW("weaponbox", EO_Spawn, WeaponBox_Spawn, FWeaponBox_Spawn);
 	ResetEntityFW("worldspawn", EO_TraceAttack, TraceAttack, FTraceAttackEntity);
 	ResetEntityFW("func_wall", EO_TraceAttack, TraceAttack, FTraceAttackEntity);
 	ResetEntityFW("func_tank", EO_TraceAttack, TraceAttack, FTraceAttackEntity);
@@ -779,7 +780,7 @@ static int __fastcall Weapon_GetItemInfo(CBasePlayerWeapon *BaseWeapon, int, Ite
 	if (GET_CUSTOM_WEAPON(BaseWeapon))
 		*II = ItemInfoes[GET_WEAPON_KEY(BaseWeapon)]; 
 	else
-		static_cast<float(__fastcall *)(CBasePlayerWeapon *, int, ItemInfo *)>(FWeapon_GetItemInfo[GET_WEAPON_FID(BaseWeapon)])(BaseWeapon, NULL, II);
+		static_cast<int(__fastcall *)(CBasePlayerWeapon *, int, ItemInfo *)>(FWeapon_GetItemInfo[GET_WEAPON_FID(BaseWeapon)])(BaseWeapon, NULL, II);
 
 	return TRUE;
 }
@@ -857,18 +858,18 @@ static void __fastcall Player_TakeDamage(CBasePlayer *BasePlayer, int, entvars_t
 	edict_t *PlayerEdict = ENT(Attacker);
 	CBasePlayerItem *BaseItem = nullptr;
 	Weapon = nullptr;
-
+	
 	if (MF_IsPlayerValid(NUM_FOR_EDICT(PlayerEdict)))
 		BaseItem = ((CBasePlayer *)PlayerEdict->pvPrivateData)->m_pActiveItem;
-
+	
 	if (BaseItem && GET_CUSTOM_WEAPON(BaseItem) && (DamageBits & DMG_BULLET))
 	{
 		Weapon = &Weapons[GET_WEAPON_KEY(BaseItem)];
 		Damage *= (Weapon->A2I == A2_Switch && GET_WEAPON_INATTACK2(BaseItem)) ? Weapon->A2V->WA2_SWITCH_DAMAGE : Weapon->Damage;
 	}
-
+	
 	static_cast<void(__fastcall *)(CBasePlayer *, int, entvars_t *, entvars_t *, float, int)>(FPlayer_TakeDamage)(BasePlayer, 0, Inflictor, Attacker, Damage, DamageBits);
-
+	
 	if (Weapon)
 	{
 		if (Weapon->Forwards[WForward::DamagePost])
@@ -948,9 +949,9 @@ static void __fastcall TraceAttackContinue(CBaseEntity *BaseEntity, entvars_t *A
 {
 	if (!AttackerVars || fast_FNullEnt(ENT(AttackerVars)))
 		return;
-
+	
 	CBasePlayerWeapon *BaseWeapon = static_cast<CBasePlayerWeapon *>(static_cast<CBasePlayer *>(ENT(AttackerVars)->pvPrivateData)->m_pActiveItem);
-
+	
 	if (!GET_CUSTOM_WEAPON(BaseWeapon))
 		return;
 
@@ -1155,17 +1156,17 @@ void SetModel(edict_t *Edict, const char *Model)
 	
 	if (!BaseItem && !(BaseItem = WeaponBox->m_rgpPlayerItems[2]))
 		RETURN_META(MRES_IGNORED);
-
+	
 	//CBasePlayerWeapon *BaseWeapon = (CBasePlayerWeapon *)BaseItem;
 
 	if (fast_FNullEnt(ENT(BaseItem->pev)) || !GET_CUSTOM_WEAPON(BaseItem))
 		RETURN_META(MRES_IGNORED);
-
+	
 	Weapon = &Weapons[GET_WEAPON_KEY(BaseItem)];
 	SET_MODEL(Edict, Weapon->WModel);
 	SET_WEAPON_OWNER(BaseItem, NULL);
 	SET_WEAPON_OWNER_ED(BaseItem, SVGame_Edicts);
-
+	
 	if (Weapon->Forwards[WForward::DropPost])
 		MF_ExecuteForward(Weapon->Forwards[WForward::DropPost], NUM_FOR_EDICT(ENT(BaseItem->pev)));
 
@@ -1174,11 +1175,13 @@ void SetModel(edict_t *Edict, const char *Model)
 
 void EmitSound(edict_t *PlayerEdict, int Channel, const char *Sample, float Volume, float Attenuation, int Flags, int Pitch)
 {
+	SET_META_RESULT(MRES_IGNORED);
+
 	if (IS_USER_DEAD(PlayerEdict))
-		RETURN_META(MRES_IGNORED);
+		return;
 
 	if (Sample[0] != 'w')
-		RETURN_META(MRES_IGNORED);
+		return;
 
 	if (Sample[8] == 'r' && Sample[9] == 'e')
 	{
@@ -1187,8 +1190,6 @@ void EmitSound(edict_t *PlayerEdict, int Channel, const char *Sample, float Volu
 		if (GET_CUSTOM_WEAPON(BaseWeapon) && Weapons[GET_WEAPON_KEY(BaseWeapon)].Flags & WFlag::ShotGunCustomReloadSound)
 			RETURN_META(MRES_SUPERCEDE);
 	}
-
-	RETURN_META(MRES_IGNORED);
 }
 
 void UpdateClientData_Post(const edict_s *PlayerEdict, int SendWeapons, clientdata_s *CD)
