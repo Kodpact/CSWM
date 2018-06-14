@@ -10,3 +10,9 @@ Counter-Strike weapon mod (:gun:). Adds infinite amount of weapons.
 # Building CSWM
 
 Just download & open solution file (sln). It's recommended to use VS 2013 for compilation.
+
+
+# Known Issues
+> Theres No Smoke Puff At Hit Origin.
+
+> Crosshair Now Working Properly (This one can not be fixed).
