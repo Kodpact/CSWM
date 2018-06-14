@@ -168,6 +168,7 @@
     <ClInclude Include="..\HLSDK.h" />
     <ClInclude Include="..\Module.h" />
     <ClInclude Include="..\PData.h" />
+    <ClInclude Include="..\PlatFormHelper.h" />
     <ClInclude Include="..\TraceAttack.h" />
   </ItemGroup>
   <ItemGroup>
@@ -176,6 +177,7 @@
     <ClCompile Include="..\FakeCMD.cpp" />
     <ClCompile Include="..\HEFW.cpp" />
     <ClCompile Include="..\Module.cpp" />
+    <ClCompile Include="..\ReGameAPI.cpp" />
     <ClCompile Include="..\TraceAttack.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

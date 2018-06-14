@@ -46,3 +46,7 @@ extern enginefuncs_t *g_pengfuncsTable;
 extern enginefuncs_t *g_pengfuncsTable_Post;
 extern NEW_DLL_FUNCTIONS *g_pNewFunctionsTable;
 extern NEW_DLL_FUNCTIONS *g_pNewFunctionsTable_Post;
+
+extern IReGameApi *ReGameApi;
+extern const ReGameFuncs_t *ReGameFuncs;
+extern IReGameHookchains *ReGameHookchains;

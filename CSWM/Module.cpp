@@ -12,7 +12,7 @@ cell WeaponCount = NULL;
 cell AmmoCount = AMMO_MAX_TYPES;
 cell ProjectileCount = NULL;
 
-BOOL SV_Log;
+BOOL SV_Log, RunningOnReGameDLL;
 const cell WEAPON_TYPE_ID[] = { CSW_P228, CSW_XM1014, CSW_AK47, CSW_AWP };
 
 int MI_Trail, MI_Explosion, MI_Smoke;
@@ -79,14 +79,18 @@ cell AMX_NATIVE_CALL CreateWeapon(AMX *amx, cell *params)
 	return WeaponCount - 1;
 }
 
+void UpdateAmmoList();
 cell AMX_NATIVE_CALL CreateAmmo(AMX *amx, cell *params)
 {
+	if (!Ammos.length())
+		UpdateAmmoList();
+	
 	CAmmo Ammo;
 	Ammo.Cost = params[1];
 	Ammo.Amount = params[2];
 	Ammo.Max = params[3];
 	Ammos.append(Ammo);
-
+	
 	AmmoCount++;
 	return AmmoCount - 1;
 }
@@ -770,7 +774,12 @@ AMX_NATIVE_INFO AMXX_NATIVES[] =
 	{ NULL, NULL }
 };
 
+bool ReGameDLL_API_Initialize();
+
 void OnAmxxAttach(void)
 {
+	if (ReGameDLL_API_Initialize())
+		RunningOnReGameDLL = TRUE;
+
 	MF_AddNatives(AMXX_NATIVES);
 }

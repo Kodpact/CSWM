@@ -126,8 +126,13 @@ enum
 	EO_Item_GetMaxSpeed,
 	EO_Item_ItemSlot,
 
-	EO_CStrike_RoundRespawn = 84,
-	EO_Weapon_SendWeaponAnim,
+	EO_Weapon_ExtractAmmo = 80,
+	EO_Weapon_ExtractClipAmmo,
+	EO_Weapon_AddWeapon,
+	EO_Weapon_PlayEmptySound,
+	EO_Weapon_ResetEmptySound,
+	EO_Weapon_IsUsable,
+	EO_Weapon_SendWeaponAnim = 85,
 	EO_Weapon_PrimaryAttack = 87,
 	EO_Weapon_SecondaryAttack,
 	EO_Weapon_Reload,
@@ -135,6 +140,8 @@ enum
 	EO_Weapon_Retire,
 	EO_Weapon_ShouldIdle,
 	EO_Wepon_UseDecrement,
+
+	EO_CStrike_RoundRespawn = 84,
 };
 
 #define CSW_P228            1

@@ -2,8 +2,8 @@
 
 // Module info
 #define MODULE_NAME "CSWM"
-#define MODULE_VERSION "1.45 Beta"
-#define MODULE_VERSION_FLOAT 1.45
+#define MODULE_VERSION "1.46 Beta"
+#define MODULE_VERSION_FLOAT 1.46
 #define MODULE_AUTHOR "Ghost"
 #define MODULE_URL "https://forums.alliedmods.net/showthread.php?t=308229"
 #define MODULE_LOGTAG "CSWM"
