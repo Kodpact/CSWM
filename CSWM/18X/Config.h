@@ -2,7 +2,7 @@
 
 // Module info
 #define MODULE_NAME "CSWM"
-#define MODULE_VERSION "1.46 Beta"
+#define MODULE_VERSION "1.47 Beta"
 #define MODULE_VERSION_FLOAT 1.46
 #define MODULE_AUTHOR "Ghost"
 #define MODULE_URL "https://forums.alliedmods.net/showthread.php?t=308229"
@@ -301,7 +301,7 @@
 // #define FN_GetInfoKeyBuffer					GetInfoKeyBuffer
 // #define FN_InfoKeyValue						InfoKeyValue
 // #define FN_SetKeyValue						SetKeyValue
-// #define FN_SetClientKeyValue					SetClientKeyValue
+#define FN_SetClientKeyValue					SetClientKeyValue
 // #define FN_IsMapValid						IsMapValid
 // #define FN_StaticDecal						StaticDecal
 // #define FN_PrecacheGeneric					PrecacheGeneric

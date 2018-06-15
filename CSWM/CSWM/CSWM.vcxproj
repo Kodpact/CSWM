@@ -165,6 +165,7 @@
     <ClInclude Include="..\CstrikeUtils.h" />
     <ClInclude Include="..\CSWM.h" />
     <ClInclude Include="..\FakeCMD.h" />
+    <ClInclude Include="..\HEFW.h" />
     <ClInclude Include="..\HLSDK.h" />
     <ClInclude Include="..\Module.h" />
     <ClInclude Include="..\PData.h" />

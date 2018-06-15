@@ -63,6 +63,9 @@
     <ClInclude Include="..\PlatFormHelper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\HEFW.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\SDK\182\AMXX182.cpp">
