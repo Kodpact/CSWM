@@ -97,15 +97,26 @@ const int GUNSHOT_DECALS[] = { 41, 42, 43, 44, 45 };
 const int WEAPONS_BIT_SUM = 1577057706;
 const int OFFSET_TEAM = 114;
 
-static CWeapon *Weapon = nullptr;
-static CIcon CurrentIcon = { nullptr, NULL, NULL, NULL };
+static CWeapon *Weapon = NULL;
+static CIcon CurrentIcon = { NULL, NULL, NULL, NULL };
 
 void PrecacheModule(void);
 void **SpecialBot_VTable = NULL;
 
-inline int DLLINTERNAL fast_FNullEnt(const edict_t* Edict)
+static BOOL HasPrivateData(edict_t *Edict)
 {
-	return(!Edict || !(*g_engfuncs.pfnEntOffsetOfPEntity)(Edict));
+	if (FNullEnt(Edict) || !Edict->pvPrivateData)
+		return FALSE;
+
+	return TRUE;
+}
+
+static BOOL HasPrivateData(entvars_t *EntVars)
+{
+	if (!EntVars || !HasPrivateData(ENT(EntVars)))
+		return FALSE;
+
+	return TRUE;
 }
 
 static void __fastcall Weapon_SpawnPistol(CBasePlayerWeapon *BaseWeapon, int)
@@ -322,7 +333,7 @@ inline int *GetPlayerAmmo(CBasePlayer *BasePlayer, int AmmoID);
 static void __fastcall Weapon_Reload(CBasePlayerWeapon *BaseWeapon, int CustomReload) // LETS USE THIS
 {
 	static_cast<void(__fastcall *)(CBasePlayerWeapon *, int)>(FWeapon_Reload[CustomReload ? WType::Rifle : GET_WEAPON_FID(BaseWeapon)])(BaseWeapon, 0);
-	
+
 	Weapon = &Weapons[GET_WEAPON_KEY(BaseWeapon)];
 
 	if (!GET_CUSTOM_WEAPON(BaseWeapon) || !BaseWeapon->m_pPlayer->m_rgAmmo[Weapon->AmmoID] || BaseWeapon->m_iClip == Weapon->Clip)
@@ -330,28 +341,28 @@ static void __fastcall Weapon_Reload(CBasePlayerWeapon *BaseWeapon, int CustomRe
 
 	if (Weapon->Forwards[WForward::ReloadPre] && MF_ExecuteForward(Weapon->Forwards[WForward::ReloadPre], NUM_FOR_EDICT(ENT(BaseWeapon->pev))) > WReturn::IGNORED)
 		return;
-	
+
 	BOOL SwitchON = (Weapon->A2I == A2_Switch && GET_WEAPON_INATTACK2(BaseWeapon));
 
 	BaseWeapon->m_pPlayer->m_iFOV = CS_NO_ZOOM;
 	BaseWeapon->m_flTimeWeaponIdle = BaseWeapon->m_flNextSecondaryAttack = BaseWeapon->m_pPlayer->m_flNextAttack = SwitchON ? Weapon->A2V->WA2_SWITCH_ANIM_RELOAD_DURATION : Weapon->AnimR_Duration;
 	BaseWeapon->m_fInReload = TRUE;
 	SendWeaponAnim(BaseWeapon, SwitchON ? Weapon->A2V->WA2_SWITCH_ANIM_RELOAD : Weapon->AnimR);
-	
+
 	if (Weapon->Forwards[WForward::ReloadPost])
 		MF_ExecuteForward(Weapon->Forwards[WForward::ReloadPost], NUM_FOR_EDICT(ENT(BaseWeapon->pev)));
 }
 
 static void __fastcall Weapon_ReloadShotGun(CBasePlayerWeapon *BaseWeapon, int)
 {
-	Weapon = nullptr;
+	Weapon = NULL;
 
 	if (GET_CUSTOM_WEAPON(BaseWeapon))
 	{
 		if ((Weapon = &Weapons[GET_WEAPON_KEY(BaseWeapon)])->AnimR)
 			return Weapon_Reload(BaseWeapon, TRUE);
 	}
-	
+
 	int WeaponIdle = BaseWeapon->m_fInSpecialReload;
 
 	static_cast<void(__fastcall *)(CBasePlayerWeapon *)>(FWeapon_Reload[WType::ShotGun])(BaseWeapon);
@@ -395,25 +406,17 @@ static void __fastcall Weapon_PostFrame_SecondaryAttack_Pre(CBasePlayerWeapon *B
 			if (!GET_WEAPON_INBURST(BaseWeapon))
 				break;
 
-			BOOL DisableBurst = FALSE;
-
 			if (GET_WEAPON_CURBURST(BaseWeapon))
 			{
-				if (BaseWeapon->m_fInReload || !BaseWeapon->m_iClip)
-					DisableBurst = TRUE;
-				else if (gpGlobals->time - 0.025f > BaseWeapon->m_flLastFire)
-					Weapon_PrimaryAttack(BaseWeapon, NULL);
+				if (!BaseWeapon->m_fInReload && BaseWeapon->m_iClip && gpGlobals->time - 0.025f > BaseWeapon->m_flLastFire)
+					return Weapon_PrimaryAttack(BaseWeapon, NULL);
 			}
-			else DisableBurst = TRUE;
 
-			if (DisableBurst)
-			{
-				if ((1 << BaseWeapon->m_iId) & SECONDARY_WEAPONS_BIT_SUM)
-					BaseWeapon->m_iShotsFired = TRUE;
+			if ((1 << BaseWeapon->m_iId) & SECONDARY_WEAPONS_BIT_SUM)
+				BaseWeapon->m_iShotsFired = TRUE;
 
-				SET_WEAPON_CURBURST(BaseWeapon, NULL);
-				SET_WEAPON_INBURST(BaseWeapon, FALSE);
-			}
+			SET_WEAPON_CURBURST(BaseWeapon, NULL);
+			SET_WEAPON_INBURST(BaseWeapon, FALSE);
 			break;
 		}
 		case A2_AutoPistol:
@@ -456,7 +459,6 @@ static void __fastcall Weapon_PostFrame_SecondaryAttack_Post(CBasePlayerWeapon *
 			case A2_AutoPistol: SET_WEAPON_INATTACK2(BaseWeapon, TRUE); BaseWeapon->m_iShotsFired = FALSE; break;
 			case A2_MultiShot: Attack2_MultiShot(BaseWeapon, Weapon); break;
 			case A2_KnifeAttack: Attack2_KnifeAttack(BasePlayer, BaseWeapon, Weapon); break;
-			case A2_RadiusDamage: break;
 			case A2_InstaSwitch: Attack2_InstaSwitch(ENT(BasePlayer->pev), BaseWeapon, Weapon); break;
 		}
 
@@ -551,7 +553,7 @@ static void __fastcall Weapon_Holster(CBasePlayerWeapon *BaseWeapon, int, int Sk
 
 	Weapon = &Weapons[GET_WEAPON_KEY(BaseWeapon)];
 
-	if (Weapon->A2I == A2_KnifeAttack && GET_WEAPON_INATTACK2(BaseWeapon))
+	if (Weapon->A2I == A2_KnifeAttack && GET_WEAPON_A2DELAY(BaseWeapon))
 		STOP_SOUND(ENT(BaseWeapon->pev), CHAN_WEAPON, Weapon->A2V->WA2_KNIFEATTACK_SOUND);
 
 	if (Weapon->Flags & SwitchMode_BarTime && GET_WEAPON_INATTACK2(BaseWeapon))
@@ -620,7 +622,7 @@ static void SendWeaponAnim(CBasePlayerWeapon *BaseWeapon, int Anim)
 	entvars_t *PlayerEntVars = BaseWeapon->m_pPlayer->pev;
 	PlayerEntVars->weaponanim = Anim;
 
-	MESSAGE_BEGIN(MSG_ONE, SVC_WEAPONANIM, nullptr, ENT(PlayerEntVars));
+	MESSAGE_BEGIN(MSG_ONE, SVC_WEAPONANIM, NULL, ENT(PlayerEntVars));
 	WRITE_BYTE(Anim);
 	WRITE_BYTE(0);
 	MESSAGE_END();
@@ -680,8 +682,8 @@ static void GetWeaponAttachment(edict_t *PlayerEdict, Vector OutPut, float fDis 
 static void __fastcall Player_TakeDamage(CBasePlayer *BasePlayer, int, entvars_t *Inflictor, entvars_t *Attacker, float Damage, int DamageBits)
 {
 	edict_t *PlayerEdict = ENT(Attacker);
-	CBasePlayerItem *BaseItem = nullptr;
-	Weapon = nullptr;
+	CBasePlayerItem *BaseItem = NULL;
+	Weapon = NULL;
 
 	if (MF_IsPlayerValid(NUM_FOR_EDICT(PlayerEdict)))
 		BaseItem = ((CBasePlayer *)PlayerEdict->pvPrivateData)->m_pActiveItem;
@@ -691,9 +693,9 @@ static void __fastcall Player_TakeDamage(CBasePlayer *BasePlayer, int, entvars_t
 		Weapon = &Weapons[GET_WEAPON_KEY(BaseItem)];
 		Damage *= (Weapon->A2I == A2_Switch && GET_WEAPON_INATTACK2(BaseItem)) ? Weapon->A2V->WA2_SWITCH_DAMAGE : Weapon->Damage;
 	}
-	
-	static_cast<void(__fastcall *)(CBasePlayer *, int, entvars_t *, entvars_t *, float, int)>(FPlayer_TakeDamage)(BasePlayer, 0, Inflictor, Attacker, Damage, DamageBits);
-	
+
+	static_cast<void(__fastcall *)(CBasePlayer *, int, entvars_t *, entvars_t *, float, int)>(BasePlayer->IsBot() ? FPlayerBot_TakeDamage : FPlayer_TakeDamage)(BasePlayer, 0, Inflictor, Attacker, Damage, DamageBits);
+
 	if (Weapon)
 	{
 		if (Weapon->Forwards[WForward::DamagePost])
@@ -756,7 +758,7 @@ static int __fastcall Player_GiveAmmo(CBasePlayer *BasePlayer, int, int Amount, 
 		return -1;
 
 	BasePlayer->m_rgAmmo[AmmoID] += Add;
-	MESSAGE_BEGIN(MSG_ONE, MESSAGE_AMMOPICKUP, nullptr, ENT(BasePlayer->pev));
+	MESSAGE_BEGIN(MSG_ONE, MESSAGE_AMMOPICKUP, NULL, ENT(BasePlayer->pev));
 	WRITE_BYTE(AmmoID);
 	WRITE_BYTE(Add);
 	MESSAGE_END();
@@ -786,10 +788,15 @@ static void __fastcall TraceAttack(CBaseEntity *BaseEntity, int, entvars_t *Atta
 
 static void TraceAttackContinue(CBaseEntity *BaseEntity, entvars_t *AttackerVars, float Damage, Vector Direction, TraceResult *TR, int DamageBits)
 {
-	if (!AttackerVars || fast_FNullEnt(ENT(AttackerVars)))
+	if (!AttackerVars || !HasPrivateData(ENT(AttackerVars)))
 		return;
 
-	CBasePlayerWeapon *BaseWeapon = static_cast<CBasePlayerWeapon *>(static_cast<CBasePlayer *>(ENT(AttackerVars)->pvPrivateData)->m_pActiveItem);
+	CBaseEntity *BaseAttacker = (CBaseEntity *)ENT(AttackerVars)->pvPrivateData;
+
+	if (!BaseAttacker->IsPlayer())
+		return;
+
+	CBasePlayerWeapon *BaseWeapon = (CBasePlayerWeapon *)((CBasePlayer *)BaseAttacker)->m_pActiveItem;
 
 	if (!GET_CUSTOM_WEAPON(BaseWeapon))
 		return;
@@ -999,7 +1006,7 @@ void SetModel(edict_t *Edict, const char *Model)
 
 	//CBasePlayerWeapon *BaseWeapon = (CBasePlayerWeapon *)BaseItem;
 
-	if (fast_FNullEnt(ENT(BaseItem->pev)) || !GET_CUSTOM_WEAPON(BaseItem))
+	if (!HasPrivateData(ENT(BaseItem->pev)) || !GET_CUSTOM_WEAPON(BaseItem))
 		RETURN_META(MRES_IGNORED);
 
 	Weapon = &Weapons[GET_WEAPON_KEY(BaseItem)];
@@ -1068,13 +1075,13 @@ void BuyAmmo(edict_t *PlayerEdict, int Slot)
 	}
 
 	Player_GiveAmmo(BasePlayer, NULL, Ammo->Amount, Ammo->Name, -1);
-	MESSAGE_BEGIN(MSG_ONE, MESSAGE_MONEY, nullptr, PlayerEdict);
+	MESSAGE_BEGIN(MSG_ONE, MESSAGE_MONEY, NULL, PlayerEdict);
 	WRITE_LONG(*PlayerMoney -= Ammo->Cost);
 	WRITE_BYTE(TRUE);
 	MESSAGE_END();
 
 	Flash:
-	MESSAGE_BEGIN(MSG_ONE, MESSAGE_BLINKACCT, nullptr, PlayerEdict);
+	MESSAGE_BEGIN(MSG_ONE, MESSAGE_BLINKACCT, NULL, PlayerEdict);
 	WRITE_BYTE(2);
 	MESSAGE_END();
 }
@@ -1155,7 +1162,7 @@ static const char *GetWeaponName(int WeaponID)
 
 static void SetWeaponHUD(edict_t *PlayerEdict, int WeaponID)
 {
-	MESSAGE_BEGIN(MSG_ONE, MESSAGE_WEAPONLIST, nullptr, PlayerEdict);
+	MESSAGE_BEGIN(MSG_ONE, MESSAGE_WEAPONLIST, NULL, PlayerEdict);
 	switch (WeaponID)
 	{
 		case WEAPON_P228: { WRITE_STRING("weapon_p228");  WRITE_BYTE(9);  WRITE_BYTE(52); WRITE_BYTE(-1); WRITE_BYTE(-1); WRITE_BYTE(1); WRITE_BYTE(3); WRITE_BYTE(1); WRITE_BYTE(0); break; }
@@ -1170,7 +1177,7 @@ static void SetWeaponHUDCustom(edict_t *PlayerEdict, CWeapon *Weapon)
 {
 	static char HUD[7 + MAX_MODEL_NAME] = "weapon_";
 	strcpy(&HUD[7], Weapon->Model);
-	MESSAGE_BEGIN(MSG_ONE, MESSAGE_WEAPONLIST, nullptr, PlayerEdict);
+	MESSAGE_BEGIN(MSG_ONE, MESSAGE_WEAPONLIST, NULL, PlayerEdict);
 	WRITE_STRING(HUD);
 	WRITE_BYTE(Weapon->AmmoID);
 	WRITE_BYTE(Ammos[Weapon->AmmoID].Max);
@@ -1188,7 +1195,7 @@ static void SetWeaponHUDCustom(edict_t *PlayerEdict, CWeapon *Weapon)
 
 static void StatusIcon(edict_t *PlayerEdict, BOOL Status, const char *Icon, int R, int G, int B)
 {
-	MESSAGE_BEGIN(MSG_ONE, MESSAGE_STATUSICON, nullptr, PlayerEdict);
+	MESSAGE_BEGIN(MSG_ONE, MESSAGE_STATUSICON, NULL, PlayerEdict);
 	WRITE_BYTE(Status);
 	WRITE_STRING(Icon);
 	WRITE_BYTE(R);
@@ -1202,7 +1209,7 @@ void StatusIconNumber(edict_t *PlayerEdict, BOOL Status, char Number)
 	static char NumString[] = "number_0";
 	NumString[8] = Number;
 
-	MESSAGE_BEGIN(MSG_ONE, MESSAGE_STATUSICON, nullptr, PlayerEdict);
+	MESSAGE_BEGIN(MSG_ONE, MESSAGE_STATUSICON, NULL, PlayerEdict);
 	WRITE_BYTE(Status);
 	WRITE_STRING(NumString);
 	WRITE_BYTE(0);
@@ -1213,7 +1220,7 @@ void StatusIconNumber(edict_t *PlayerEdict, BOOL Status, char Number)
 
 static void ScreenShake(edict_t *PlayerEdict, int Amplitude, int Duration, int Frequency)
 {
-	MESSAGE_BEGIN(MSG_ONE_UNRELIABLE, MESSAGE_SCREENSHAKE, nullptr, PlayerEdict);
+	MESSAGE_BEGIN(MSG_ONE, MESSAGE_SCREENSHAKE, NULL, PlayerEdict);
 	WRITE_SHORT(Amplitude << 12);
 	WRITE_SHORT(Duration << 12);
 	WRITE_SHORT(Frequency << 12);
@@ -1222,14 +1229,14 @@ static void ScreenShake(edict_t *PlayerEdict, int Amplitude, int Duration, int F
 
 static void BarTime(edict_t *PlayerEdict, int Duration)
 {
-	MESSAGE_BEGIN(MSG_ONE, MESSAGE_BARTIME, nullptr, PlayerEdict);
+	MESSAGE_BEGIN(MSG_ONE, MESSAGE_BARTIME, NULL, PlayerEdict);
 	WRITE_SHORT(Duration);
 	MESSAGE_END();
 }
 
 static void ClientPrint(edict_t *PlayerEdict, int Type, const char *Msg)
 {
-	MESSAGE_BEGIN(MSG_ONE, MESSAGE_TEXTMSG, nullptr, PlayerEdict);
+	MESSAGE_BEGIN(MSG_ONE, MESSAGE_TEXTMSG, NULL, PlayerEdict);
 	WRITE_BYTE(Type);
 	WRITE_STRING(Msg);
 	MESSAGE_END();
@@ -1262,85 +1269,6 @@ static BOOL IsUserAlive(edict_t *PlayerEdict)
 	return IS_USER_ALIVE(PlayerEdict);
 }
 
-static edict_t *NearestInViewCone(edict_t *PlayerEdict, float Radius, float Damage, CBasePlayerWeapon *BaseWeapon, BOOL Accurate)
-{
-	Vector MyOrigin = PlayerEdict->v.origin, Origin;
-	float Nearest = 0.f, Length;
-	edict_t *CheckEdict = NULL, *TargetEdict = nullptr;
-	BOOL Type = NULL;
-	TraceResult TR;
-
-	while ((CheckEdict = FIND_ENTITY_IN_SPHERE(CheckEdict, PlayerEdict->v.origin, Radius)) != SVGame_Edicts)
-	{
-		if (CheckEdict->v.health >= 1.f && NUM_FOR_EDICT(CheckEdict) > MaxPlayers)
-		{
-			Type = 2;
-		}
-		else if (IS_USER_ALIVE(CheckEdict))
-			Type = 1;
-		else continue;
-
-		Origin = CheckEdict->v.origin;
-
-		if (Type == 2)
-			Origin = Origin + (CheckEdict->v.mins + CheckEdict->v.maxs) * 0.5f;
-
-		Length = (MyOrigin - Origin).Length();
-
-		if (Nearest > 0.f && Length > Nearest)
-			continue;
-
-		if (!InViewCone(PlayerEdict, Origin, Accurate))
-			continue;
-
-		if (!(GET_WEAPON_FLAGS(BaseWeapon) & FLAG_KNIFEATTACK_PENETRATION))
-		{
-			TRACE_LINE(MyOrigin, Origin + PlayerEdict->v.view_ofs - Vector(0, 6, 0), 0, PlayerEdict, &TR);
-
-			if (TR.pHit != CheckEdict)
-				continue;
-		}
-
-		switch (Type)
-		{
-			case 2:
-			{
-				((CBreakable *)CheckEdict->pvPrivateData)->TakeDamage(BaseWeapon->pev, &PlayerEdict->v, Damage, DMG_SLASH);
-				continue;
-			}
-			case 1:
-			{
-				if (CheckEdict == PlayerEdict)
-					continue;
-
-				if (!MP_FriendlyFire && *(((int *)PlayerEdict->pvPrivateData) + OFFSET_TEAM) == *(((int *)CheckEdict->pvPrivateData) + OFFSET_TEAM))
-					continue;
-
-				break;
-			}
-			default: continue;
-		}
-
-		Nearest = Length;
-		TargetEdict = CheckEdict;
-	}
-
-	return TargetEdict;
-}
-
-static void PlayerFakeDamage(edict_t *PlayerEdict, float Damage, CBasePlayerWeapon *Inflictor)
-{
-	if (fast_FNullEnt(PlayerEdict))
-		return;
-
-	/*if ((PlayerEdict->v.health -= Damage) <= 0)
-		//MDLL_ClientKill(PlayerEdict);
-		static_cast<void(__fastcall *)(CBasePlayer *Killed, entvars_t *Attacker, BOOL GIB)>(FPlayerKilled)((CBasePlayer *)PlayerEdict->pvPrivateData, Attacker, FALSE);*/
-
-	//static_cast<BOOL(__fastcall *)(void *, int, entvars_t *, entvars_t *, float, int)>(FPlayer_TakeDamage)(PlayerEdict->pvPrivateData, NULL, Inflictor->pev, Inflictor->m_pPlayer->pev, Damage, DMG_SLASH);
-	((CBaseEntity *)PlayerEdict->pvPrivateData)->TakeDamage(Inflictor->pev, &Inflictor->pev->owner->v, Damage, DMG_SLASH);
-}
-
 static void PlayerKnockBack(edict_t *VictimEdict, entvars_t *AttackerEntVars, float KnockBack)
 {
 	Vector Differ = (VictimEdict->v.origin - AttackerEntVars->origin), Velocity;
@@ -1349,6 +1277,47 @@ static void PlayerKnockBack(edict_t *VictimEdict, entvars_t *AttackerEntVars, fl
 	Velocity = Differ / Multiplier;
 	Velocity[2] += RANDOM_FLOAT(200.0, 300.0);
 	VictimEdict->v.velocity = Velocity;
+}
+
+static void PerformDamage(edict_t *PlayerEdict, float Radius, float Damage, CBasePlayerWeapon *BaseWeapon, BOOL Accurate, float Knockback)
+{
+	Vector MyOrigin = PlayerEdict->v.origin + PlayerEdict->v.view_ofs, Origin;
+	edict_t *TargetEdict = NULL;
+	TraceResult TR;
+	CBaseEntity *BaseEntity;
+	entvars_t *PlayerEntVars = &PlayerEdict->v;
+
+	while ((TargetEdict = FIND_ENTITY_IN_SPHERE(TargetEdict, PlayerEdict->v.origin, Radius)) != SVGame_Edicts)
+	{
+		if (!TargetEdict->pvPrivateData || TargetEdict == PlayerEdict)
+			continue;
+		
+		if (!TargetEdict->v.takedamage)
+			continue;
+
+		BaseEntity = (CBaseEntity *)TargetEdict->pvPrivateData;
+		Origin = TargetEdict->v.origin;
+		
+		if (!BaseEntity->IsPlayer())
+			Origin = Origin + (TargetEdict->v.mins + TargetEdict->v.maxs) * 0.5f;
+
+		if (!InViewCone(PlayerEdict, Origin, Accurate))
+			continue;
+
+		if (!(GET_WEAPON_FLAGS(BaseWeapon) & WFlag::KnifeAttack_Penetration))
+		{
+			TRACE_LINE(MyOrigin, Origin, 0, PlayerEdict, &TR);
+
+			if (TR.pHit != TargetEdict)
+				continue;
+		}
+		
+		BaseEntity->TakeDamage(PlayerEntVars, PlayerEntVars, Damage, DMG_SLASH);
+
+		if (BaseEntity->IsPlayer())
+			PlayerKnockBack(TargetEdict, BaseEntity->pev, Knockback);
+	}
+
 }
 
 /* ===================================================== */
@@ -1507,21 +1476,13 @@ static void Attack2_KnifeAttackPerform(CBasePlayerWeapon *BaseWeapon)
 	CBasePlayer *BasePlayer = BaseWeapon->m_pPlayer;
 	Weapon = &Weapons[GET_WEAPON_KEY(BaseWeapon)];
 
-	if (Weapon->Flags & FLAG_KNIFEATTACK_SCREENSHAKE)
+	if (Weapon->Flags & WFlag::KnifeAttack_ScreenShake)
 		ScreenShake(ENT(BasePlayer->pev), 4, 4, 4);
 
 	float KnockBack = Weapon->A2V->WA2_KNIFEATTACK_KNOCKBACK;
 	float Damage = (float)RANDOM_LONG(Weapon->A2V->WA2_KNIFEATTACK_DAMAGE_MIN, Weapon->A2V->WA2_KNIFEATTACK_DAMAGE_MAX);
 
-	edict_t *TargetEdict = NearestInViewCone(ENT(BasePlayer->pev), Weapon->A2V->WA2_KNIFEATTACK_RADIUS, Damage, BaseWeapon, Weapon->Flags & KnifeAttack_Accurate);
-
-	if (!TargetEdict)
-		return;
-
-	PlayerFakeDamage(TargetEdict, Damage, BaseWeapon);
-
-	if (KnockBack)
-		PlayerKnockBack(TargetEdict, BasePlayer->pev, KnockBack);
+	PerformDamage(ENT(BasePlayer->pev), Weapon->A2V->WA2_KNIFEATTACK_RADIUS, Damage, BaseWeapon, Weapon->Flags & WFlag::KnifeAttack_Accurate, KnockBack);
 }
 
 static void Attack2_InstaSwitch(edict_t *PlayerEdict, CBasePlayerWeapon *BaseWeapon, CWeapon *Weapon)
@@ -1590,7 +1551,7 @@ void CallSendWeaponAnim(CBasePlayerWeapon *BaseWeapon, int Anim)
 void SetClientKeyValue(int Index, char *InfoBuffer, const char *Key, const char *Value)
 {
 	SET_META_RESULT(MRES_IGNORED);
-	
+
 	if (SpecialBot_VTable)
 		return;
 
@@ -1643,7 +1604,7 @@ BOOL DispatchSpawn_Post(edict_s *Entity)
 	PrecacheModule();
 	SV_Cheats = CVAR_GET_FLOAT("sv_cheats") != 0.0f;
 	MP_FriendlyFire = CVAR_GET_FLOAT("mp_friendlyfire") != 0.0f;
-	SV_Log = strchr(CVAR_GET_STRING("log"), 'on') != nullptr;
+	SV_Log = strchr(CVAR_GET_STRING("log"), 'on') != NULL;
 	ABlood = CVAR_GET_FLOAT("violence_ablood") != 0.0f;
 	HBlood = CVAR_GET_FLOAT("violence_hblood") != 0.0f;
 
@@ -1713,14 +1674,10 @@ void ServerActivate_Post(edict_t *pEdictList, int edictCount, int clientMax)
 		HookEntityFW(WeaponName, EO_Weapon_PrimaryAttack, Weapon_PrimaryAttack, FWeapon_PrimaryAttack[Index]);
 		HookEntityFW(WeaponName, EO_Weapon_SecondaryAttack, Weapon_SecondaryAttack, FWeapon_SecondaryAttack[Index]);
 		HookEntityFW(WeaponName, EO_Weapon_Reload, Index == 1 ? Weapon_ReloadShotGun : Weapon_Reload, FWeapon_Reload[Index]);
-		HookEntityFW(WeaponName, EO_Item_PostFrame, RunningOnReGameDLL ? Weapon_PostFrameReGameDLL : Weapon_PostFrame, FWeapon_PostFrame[Index]);
+		HookEntityFW(WeaponName, EO_Item_PostFrame, Weapon_PostFrame, FWeapon_PostFrame[Index]);
 		HookEntityFW(WeaponName, EO_Weapon_Idle, Index == 1 ? Weapon_IdleShotGun : Weapon_Idle, FWeapon_Idle[Index]);
 		HookEntityFW(WeaponName, EO_Item_Holster, Weapon_Holster, FWeapon_Holster[Index]);
 		HookEntityFW(WeaponName, EO_Item_GetMaxSpeed, Weapon_GetMaxSpeed, FWeapon_GetMaxSpeed[Index]);
-		
-		if (RunningOnReGameDLL)
-			HookEntityFW(WeaponName, EO_Item_GetItemInfo, Weapon_GetItemInfo, FWeapon_GetItemInfo[Index]);
-		
 		HookEntityFW(WeaponName, EO_Weapon_ExtractAmmo, Weapon_ExtractAmmo, FWeapon_ExtractAmmo[Index]);
 		HookEntityFW(WeaponName, EO_Weapon_SendWeaponAnim, Weapon_SendWeaponAnim, FWeapon_Dump);
 	}
@@ -1743,7 +1700,7 @@ void ServerActivate_Post(edict_t *pEdictList, int edictCount, int clientMax)
 		II.pszName = GetWeaponName(Weapon->ID); //Weapon->Name;
 		II.pszAmmo1 = RunningOnReGameDLL ? Ammos[Weapon->AmmoID].Name : "\0";
 		II.iMaxAmmo1 = Ammos[Weapon->AmmoID].Max;
-		II.pszAmmo2 = nullptr;
+		II.pszAmmo2 = NULL;
 		II.iMaxAmmo2 = -1;
 		II.iMaxClip = Weapon->Clip;
 		II.iSlot = WEAPON_SLOTID[Weapon->Type];
@@ -1820,10 +1777,6 @@ void OnPluginsUnloaded(void)
 		ResetEntityFW(WeaponName, EO_Weapon_Idle, Index == 1 ? Weapon_IdleShotGun : Weapon_Idle, FWeapon_Idle[Index]);
 		ResetEntityFW(WeaponName, EO_Item_Holster, Weapon_Holster, FWeapon_Holster[Index]);
 		ResetEntityFW(WeaponName, EO_Item_GetMaxSpeed, Weapon_GetMaxSpeed, FWeapon_GetMaxSpeed[Index]);
-		
-		if (RunningOnReGameDLL)
-			ResetEntityFW(WeaponName, EO_Item_GetItemInfo, Weapon_GetItemInfo, FWeapon_GetItemInfo[Index]);
-
 		ResetEntityFW(WeaponName, EO_Weapon_ExtractAmmo, Weapon_ExtractAmmo, FWeapon_ExtractAmmo[Index]);
 		ResetEntityFW(WeaponName, EO_Weapon_SendWeaponAnim, Weapon_SendWeaponAnim, FWeapon_Dump);
 	}
@@ -1840,7 +1793,7 @@ void OnPluginsUnloaded(void)
 
 	if (SpecialBot_VTable)
 	{
-		SpecialBot_VTable = NULL;
 		ResetEntityFWByVTable(SpecialBot_VTable, EO_TakeDamage, Player_TakeDamage, FPlayerBot_TakeDamage);
+		SpecialBot_VTable = NULL;
 	}
 }

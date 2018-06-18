@@ -9,7 +9,7 @@ void TraceAttack_Precache(void)
 
 void TraceAttack_LaserBeam(int PlayerID, Vector EndPos, int Time, int Size, int RMin, int RMax, int R, int G, int B)
 {
-	MESSAGE_BEGIN(MSG_BROADCAST, SVC_TEMPENTITY, nullptr, nullptr);
+	MESSAGE_BEGIN(MSG_BROADCAST, SVC_TEMPENTITY, NULL, NULL);
 	WRITE_BYTE(TE_BEAMENTPOINT);
 	WRITE_SHORT(PlayerID | 0x1000);
 	WRITE_COORD(EndPos.x);

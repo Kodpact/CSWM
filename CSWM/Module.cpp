@@ -6,6 +6,10 @@ extern ke::Vector<CAmmo> Ammos;
 extern ke::Vector<CProjectile> Projectiles;
 extern ke::Vector<ItemInfo> ItemInfoes;
 
+extern BOOL SV_Cheats;
+extern BOOL MP_FriendlyFire;
+extern BOOL ABlood, HBlood;
+
 char PathAddOn[32] = "CSWM";
 
 cell WeaponCount = NULL;
@@ -20,7 +24,7 @@ int MI_Trail, MI_Explosion, MI_Smoke;
 void PrecacheModule(void)
 {
 	MI_Trail = PRECACHE_MODEL("sprites/laserbeam.spr");
-	MI_Explosion = PRECACHE_MODEL("sprites/ef_starchasersr_explosion.spr");
+	MI_Explosion = PRECACHE_MODEL("sprites/fexplo.spr");
 	MI_Smoke = PRECACHE_MODEL("sprites/steam1.spr");
 }
 
@@ -68,7 +72,7 @@ cell AMX_NATIVE_CALL CreateWeapon(AMX *amx, cell *params)
 	strlower(Name);
 	sprintf(Path, "sprites/weapon_%s.txt", Name);
 	PRECACHE_GENERIC(STRING(ALLOC_STRING(Path)));
-	Weapon.Name = STRING(ALLOC_STRING(MF_GetAmxString(amx, params[3], NULL, nullptr)));
+	Weapon.Name = STRING(ALLOC_STRING(MF_GetAmxString(amx, params[3], NULL, NULL)));
 	WType Type = (WType)params[2];
 	Weapon.Type = Type;
 	Weapon.ID = WEAPON_TYPE_ID[Type];
@@ -303,7 +307,7 @@ cell AMX_NATIVE_CALL BuildWeaponAttack2(AMX *amx, cell *params)
 	CWeapon *Weapon = &Weapons[Index];
 	char Buffer[32];
 	Weapon->A2V = new A2V;
-	Weapon->A2V->TRV = nullptr;
+	Weapon->A2V->TRV = NULL;
 
 	switch (Weapon->A2I = params[2])
 	{
@@ -328,7 +332,7 @@ cell AMX_NATIVE_CALL BuildWeaponAttack2(AMX *amx, cell *params)
 			Weapon->A2V->WA2_SWITCH_DELAY = amx_ctof(*MF_GetAmxAddr(amx, params[14]));
 			Weapon->A2V->WA2_SWITCH_DAMAGE = amx_ctof(*MF_GetAmxAddr(amx, params[15]));
 			Weapon->A2V->WA2_SWITCH_RECOIL = amx_ctof(*MF_GetAmxAddr(amx, params[16]));
-			PRECACHE_SOUND(Weapon->A2V->WA2_SWITCH_FSOUND = STRING(ALLOC_STRING(MF_GetAmxString(amx, params[17], NULL, nullptr))));
+			PRECACHE_SOUND(Weapon->A2V->WA2_SWITCH_FSOUND = STRING(ALLOC_STRING(MF_GetAmxString(amx, params[17], NULL, NULL))));
 			break;
 		}
 		case A2_Burst:
@@ -401,7 +405,7 @@ cell AMX_NATIVE_CALL RegisterWeaponForward(AMX *amx, cell *params)
 		return NULL;
 
 	CWeapon *Weapon = &Weapons[Index];
-	char *String = MF_GetAmxString(amx, params[3], NULL, nullptr);
+	char *String = MF_GetAmxString(amx, params[3], NULL, NULL);
 
 	int Forward = params[2];
 
@@ -416,7 +420,7 @@ cell AMX_NATIVE_CALL RegisterWeaponForward(AMX *amx, cell *params)
 cell AMX_NATIVE_CALL PrecacheWeaponModel(AMX *amx, cell *params)
 {
 	for (int Index = 1; Index <= params[0] / (signed)sizeof(cell); Index++)
-		PRECACHE_MODEL(STRING(ALLOC_STRING(MF_GetAmxString(amx, params[Index], NULL, nullptr))));
+		PRECACHE_MODEL(STRING(ALLOC_STRING(MF_GetAmxString(amx, params[Index], NULL, NULL))));
 
 	return NULL;
 }
@@ -424,7 +428,7 @@ cell AMX_NATIVE_CALL PrecacheWeaponModel(AMX *amx, cell *params)
 cell AMX_NATIVE_CALL PrecacheWeaponSound(AMX *amx, cell *params)
 {
 	for (int Index = 1; Index <= params[0] / (signed)sizeof(cell); Index++)
-		PRECACHE_SOUND(STRING(ALLOC_STRING(MF_GetAmxString(amx, params[Index], NULL, nullptr))));
+		PRECACHE_SOUND(STRING(ALLOC_STRING(MF_GetAmxString(amx, params[Index], NULL, NULL))));
 
 	return NULL;
 }
@@ -432,14 +436,14 @@ cell AMX_NATIVE_CALL PrecacheWeaponSound(AMX *amx, cell *params)
 cell AMX_NATIVE_CALL PrecacheWeaponGeneric(AMX *amx, cell *params)
 {
 	for (int Index = 1; Index <= params[0] / (signed)sizeof(cell); Index++)
-		PRECACHE_GENERIC(STRING(ALLOC_STRING(MF_GetAmxString(amx, params[Index], NULL, nullptr))));
+		PRECACHE_GENERIC(STRING(ALLOC_STRING(MF_GetAmxString(amx, params[Index], NULL, NULL))));
 
 	return NULL;
 }
 
 cell AMX_NATIVE_CALL FindWeaponByName(AMX *amx, cell *params)
 {
-	char *Name = MF_GetAmxString(amx, params[1], NULL, nullptr);
+	char *Name = MF_GetAmxString(amx, params[1], NULL, NULL);
 
 	for (size_t Index = NULL; Index < MAX_CUSTOM_WEAPONS; Index++)
 	{
@@ -457,7 +461,7 @@ static cell AMX_NATIVE_CALL GiveWeaponByName(AMX *amx, cell *params)
 	if (PIndex < 0 || PIndex > gpGlobals->maxClients)
 		return FALSE;
 
-	GiveWeaponByName(INDEXENT(PIndex), (char *)MF_GetAmxString(amx, params[1], NULL, nullptr));
+	GiveWeaponByName(INDEXENT(PIndex), (char *)MF_GetAmxString(amx, params[1], NULL, NULL));
 	return TRUE;
 }
 
@@ -562,10 +566,10 @@ static cell AMX_NATIVE_CALL SendWeaponAnim(AMX *amx, cell *params)
 cell AMX_NATIVE_CALL CreateProjectile(AMX *amx, cell *params)
 {
 	CProjectile Projectile;
-	PRECACHE_MODEL(Projectile.Model = STRING(ALLOC_STRING(MF_GetAmxString(amx, params[1], NULL, nullptr))));
+	PRECACHE_MODEL(Projectile.Model = STRING(ALLOC_STRING(MF_GetAmxString(amx, params[1], NULL, NULL))));
 	Projectile.Gravity = amx_ctof(params[2]);
 	Projectile.Speed = amx_ctof(params[3]);
-	Projectile.Forward_Touch = MF_RegisterSPForwardByName(amx, MF_GetAmxString(amx, params[4], NULL, nullptr), FP_CELL, FP_DONE);
+	Projectile.Forward_Touch = MF_RegisterSPForwardByName(amx, MF_GetAmxString(amx, params[4], NULL, NULL), FP_CELL, FP_DONE);
 	Projectiles.append(Projectile);
 
 	ProjectileCount++;
@@ -598,13 +602,13 @@ cell AMX_NATIVE_CALL SetAmmoName(AMX *amx, cell *params)
 	if (AmmoIndex < 0 || AmmoIndex >= AmmoCount)
 		return NULL;
 
-	Ammos[AmmoIndex].Name = STRING(ALLOC_STRING(MF_GetAmxString(amx, params[2], NULL, nullptr)));
+	Ammos[AmmoIndex].Name = STRING(ALLOC_STRING(MF_GetAmxString(amx, params[2], NULL, NULL)));
 	return NULL;
 }
 
 cell AMX_NATIVE_CALL FindAmmoByName(AMX *amx, cell *params)
 {
-	char *SearchAmmoName = MF_GetAmxString(amx, params[1], NULL, nullptr);
+	char *SearchAmmoName = MF_GetAmxString(amx, params[1], NULL, NULL);
 	const char *AmmoName;
 
 	for (unsigned int Index = NULL; Index < Ammos.length(); Index++)
@@ -644,7 +648,7 @@ cell AMX_NATIVE_CALL GetWeaponName(AMX *amx, cell *params)
 
 cell AMX_NATIVE_CALL SetWeaponPathAddOn(AMX *amx, cell *params)
 {
-	strcpy_s(PathAddOn, MF_GetAmxString(amx, params[1], NULL, nullptr));
+	strcpy_s(PathAddOn, MF_GetAmxString(amx, params[1], NULL, NULL));
 	return NULL;
 }
 
@@ -667,9 +671,9 @@ static cell AMX_NATIVE_CALL RadiusDamage2(AMX *amx, cell *params)
 	WRITE_BYTE(TE_EXPLOSION);
 	WRITE_COORD(Origin[0]);
 	WRITE_COORD(Origin[1]);
-	WRITE_COORD(Origin[2]);
+	WRITE_COORD(Origin[2] + 40.f);
 	WRITE_SHORT(MI_Explosion);
-	WRITE_BYTE(6);
+	WRITE_BYTE(25);
 	WRITE_BYTE(25);
 	WRITE_BYTE(0);
 	MESSAGE_END();
@@ -692,23 +696,35 @@ static cell AMX_NATIVE_CALL RadiusDamage2(AMX *amx, cell *params)
 	WRITE_BYTE(10);
 	MESSAGE_END();
 
-	edict_t *CheckEdict = SVGame_Edicts;
+	edict_t *TargetEdict = SVGame_Edicts;
 	edict_t *Projectile = EDICT_FOR_NUM(params[4]);
+	edict_t *Owner = Projectile->v.owner;
 	float Radius = amx_ctof(params[2]);
-	entvars_t *Inflictor = FNullEnt(Projectile->v.euser1) ? &Projectile->v : &Projectile->v.euser1->v;
-	entvars_t *Attacker = FNullEnt(Projectile->v.owner) ? &Projectile->v : &Projectile->v.owner->v;
-	int CastTeam = Attacker->team;
+	entvars_t *AttackerEntVars = FNullEnt(Projectile->v.owner) ? &Projectile->v : &Projectile->v.owner->v;
+	int CastTeam = AttackerEntVars->team;
 	float Damage = amx_ctof(params[3]);
+	CBaseEntity *BaseEntity;
+	BOOL Penetrate = params[4];
+	TraceResult TR;
 	
-	while ((CheckEdict = FIND_ENTITY_IN_SPHERE(CheckEdict, Origin, Radius)) != SVGame_Edicts)
+	while ((TargetEdict = FIND_ENTITY_IN_SPHERE(TargetEdict, Origin, Radius)) != SVGame_Edicts)
 	{
-		if (FNullEnt(CheckEdict) || !CheckEdict->v.health)
+		if (!TargetEdict->pvPrivateData)
 			continue;
 
-		if (!CheckEdict->v.team || CheckEdict->v.team == CastTeam)
+		if (!TargetEdict->v.takedamage)
 			continue;
-		
-		((CBaseEntity *)CheckEdict->pvPrivateData)->TakeDamage(Inflictor, Attacker, (Damage * Radius) / (CheckEdict->v.origin - Origin).Length(), DMG_BLAST);
+
+		if (!Penetrate)
+		{
+			TRACE_LINE(Origin, TargetEdict->v.origin, 0, 0, &TR);
+
+			if (TR.pHit != TargetEdict)
+				continue;
+		}
+
+		BaseEntity = (CBaseEntity *)TargetEdict->pvPrivateData;
+		BaseEntity->TakeDamage(AttackerEntVars, AttackerEntVars, (TargetEdict == Owner ? 0.4 : 1.0) * ((Damage * Radius) / (TargetEdict->v.origin - Origin).Length()), DMG_EXPLOSION);
 	}
 
 	return NULL;
@@ -731,6 +747,33 @@ static cell AMX_NATIVE_CALL SetCustomIdleAnim(AMX *amx, cell *params)
 {
 	((CBasePlayerWeapon *)EDICT_FOR_NUM(params[1])->pvPrivateData)->m_iFamasShotsFired = params[2];
 	return NULL;
+}
+
+cell AMX_NATIVE_CALL GetWeaponPath(AMX *amx, cell *params)
+{
+	char Path[64];
+	Q_sprintf(Path, "models/%s/%s", PathAddOn, Weapons[params[1]].Model);
+	MF_SetAmxString(amx, params[2], Path, params[3]);
+	return NULL;
+}
+
+static cell AMX_NATIVE_CALL SetPlayerViewModel(AMX *amx, cell *params)
+{
+	EDICT_FOR_NUM(params[1])->v.viewmodel = (string_t)params[2];
+	return NULL;
+}
+
+static cell AMX_NATIVE_CALL SetPlayerWeapModel(AMX *amx, cell *params)
+{
+	EDICT_FOR_NUM(params[1])->v.weaponmodel = (string_t)params[2];
+	return NULL;
+}
+
+cell AMX_NATIVE_CALL PrecacheWeaponModel2(AMX *amx, cell *params)
+{
+	string_t Model = ALLOC_STRING(MF_GetAmxString(amx, params[1], NULL, nullptr));
+	PRECACHE_MODEL(STRING(Model));
+	return (cell)Model;
 }
 
 AMX_NATIVE_INFO AMXX_NATIVES[] =
@@ -771,6 +814,10 @@ AMX_NATIVE_INFO AMXX_NATIVES[] =
 	{ "CanPrimaryAttack", CanPrimaryAttack },
 	{ "SetNextAttack", SetNextAttack },
 	{ "SetCustomIdleAnim", SetCustomIdleAnim },
+	{ "GetWeaponPath", GetWeaponPath },
+	{ "SetPlayerViewModel", SetPlayerViewModel },
+	{ "SetPlayerWeapModel", SetPlayerWeapModel },
+	{ "PrecacheWeaponModel2", PrecacheWeaponModel2 },
 	{ NULL, NULL }
 };
 

@@ -76,7 +76,7 @@ void *GetEntityFW(const char ClassName[], int Offset)
 	if (Edict->pvPrivateData == NULL)
 	{
 		REMOVE_ENTITY(Edict);
-		return nullptr;
+		return NULL;
 	}
 
 	void **VTable = *((void ***)((char *)Edict->pvPrivateData));
@@ -84,7 +84,7 @@ void *GetEntityFW(const char ClassName[], int Offset)
 	REMOVE_ENTITY(Edict);
 
 	if (VTable == NULL)
-		return nullptr;
+		return NULL;
 
 	int **IVTable = (int **)VTable;
 

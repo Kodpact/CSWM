@@ -122,12 +122,6 @@ struct A2V
 #define WA2_INSTASWITCH_RECOIL FParamC
 #define WA2_INSTASWITCH_NAME SParamA
 
-enum
-{
-	FLAG_KNIFEATTACK_SCREENSHAKE = (1 << 20),
-	FLAG_KNIFEATTACK_PENETRATION = (1 << 21),
-};
-
 #include "CSWM.h"
 
 static void Attack2_Zoom(CBasePlayer *BasePlayer, int ZoomType);

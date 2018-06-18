@@ -9,4 +9,4 @@ struct FakeCMD
 	bool Notify;
 };
 
-void UTIL_FakeClientCommand(edict_t *pEdict, const char *Command, const char *Arg1 = nullptr, const char *Arg2 = nullptr);
+void UTIL_FakeClientCommand(edict_t *pEdict, const char *Command, const char *Arg1 = NULL, const char *Arg2 = NULL);

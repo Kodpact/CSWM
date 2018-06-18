@@ -30,11 +30,11 @@ bool GET_IFACE(const char* library, T*& var, const char* version, bool add_ext =
 
 	if (factory)
 	{
-		var = reinterpret_cast<T*>(factory(version, nullptr));
+		var = reinterpret_cast<T*>(factory(version, NULL));
 		return true;
 	}
 
-	var = nullptr;
+	var = NULL;
 
 	return false;
 }
