@@ -47,12 +47,10 @@ void ResetEntityFW(const char ClassName[], int Offset, void *Function, void *For
 	}
 
 	void **VTable = *((void ***)((char *)Edict->pvPrivateData));
-
 	int **IVTable = (int **)VTable;
 
 	DWORD OldFlags;
 	VirtualProtect(&IVTable[Offset], sizeof(int*), PAGE_READWRITE, &OldFlags);
-
 	IVTable[Offset] = (int *)Forward;
 	VirtualFree(Function, 0, MEM_RELEASE);
 }
@@ -63,7 +61,6 @@ void ResetEntityFWByVTable(void **VTable, int Offset, void *Function, void *&For
 
 	DWORD OldFlags;
 	VirtualProtect(&IVTable[Offset], sizeof(int*), PAGE_READWRITE, &OldFlags);
-
 	IVTable[Offset] = (int *)Forward;
 	VirtualFree(Function, 0, MEM_RELEASE);
 }

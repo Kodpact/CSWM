@@ -22,7 +22,7 @@ void *FWeapon_AddToPlayer[MAX_WEAPON_TYPES];
 void *FWeapon_Deploy[MAX_WEAPON_TYPES];
 void *FWeapon_PrimaryAttack[MAX_WEAPON_TYPES];
 void *FWeapon_SecondaryAttack[MAX_WEAPON_TYPES];
-void *FWeapon_Reload[MAX_WEAPON_TYPES];
+void *FWeapon_Reload[MAX_WEAPON_TYPES + 1];
 void *FWeapon_PostFrame[MAX_WEAPON_TYPES];
 void *FWeapon_Idle[MAX_WEAPON_TYPES];
 void *FWeapon_Holster[MAX_WEAPON_TYPES];
@@ -127,8 +127,8 @@ static void __fastcall Weapon_SpawnPistol(CBasePlayerWeapon *BaseWeapon, int)
 
 static void __fastcall Weapon_SpawnShotgun(CBasePlayerWeapon *BaseWeapon, int)
 {
-	SET_WEAPON_FID(BaseWeapon, WType::ShotGun);
-	static_cast<void(__fastcall *)(CBasePlayerWeapon *, int)>(FWeapon_Spawn[WType::ShotGun])(BaseWeapon, NULL);
+	SET_WEAPON_FID(BaseWeapon, WType::Shotgun);
+	static_cast<void(__fastcall *)(CBasePlayerWeapon *, int)>(FWeapon_Spawn[WType::Shotgun])(BaseWeapon, NULL);
 }
 
 static void __fastcall Weapon_SpawnRifle(CBasePlayerWeapon *BaseWeapon, int)
@@ -353,27 +353,133 @@ static void __fastcall Weapon_Reload(CBasePlayerWeapon *BaseWeapon, int CustomRe
 		MF_ExecuteForward(Weapon->Forwards[WForward::ReloadPost], NUM_FOR_EDICT(ENT(BaseWeapon->pev)));
 }
 
-static void __fastcall Weapon_ReloadShotGun(CBasePlayerWeapon *BaseWeapon, int)
+int LookupSequence(void *pmodel, const char *label)
+{
+	studiohdr_t *pstudiohdr = (studiohdr_t *)pmodel;
+
+	if (!pstudiohdr)
+	{
+		return 0;
+	}
+
+	// Look up by sequence name.
+	mstudioseqdesc_t *pseqdesc = (mstudioseqdesc_t *)((byte *)pstudiohdr + pstudiohdr->seqindex);
+	for (int i = 0; i < pstudiohdr->numseq; i++)
+	{
+		if (!Q_stricmp(pseqdesc[i].label, label))
+			return i;
+	}
+
+	// Not found
+	return ACT_INVALID;
+}
+
+int LookupSequence(CBasePlayer *BasePlayer, const char *label)
+{
+	void *pmodel = GET_MODEL_PTR(ENT(BasePlayer->pev));
+	return ::LookupSequence(pmodel, label);
+}
+
+void SetAnimation(edict_t *PlayerEdict, int Animation, Activity IActivity, float FrameRate = 1.0);
+void SetAnimation2(edict_t *PlayerEdict, PLAYER_ANIM Animation)
+{
+	CBasePlayer *BasePlayer = (CBasePlayer *)PlayerEdict->pvPrivateData;
+	// ONLY RELOAD SUPPORT TODAY
+	if (Animation != PLAYER_RELOAD)
+		return;
+
+	static char AnimExt[32];
+	BOOL Ducking = BasePlayer->pev->flags & FL_DUCKING;
+
+	if (Ducking)
+		Q_strcpy(AnimExt, "crouch_reload_shotgun");
+	else
+		Q_strcpy(AnimExt, "ref_reload_shotgun");
+
+	int IAnimation = LookupSequence(BasePlayer, AnimExt);
+
+	if (IAnimation < -1)
+		return;
+	
+	SetAnimation(ENT(BasePlayer->pev), IAnimation, ACT_RELOAD);
+}
+
+static void __fastcall Weapon_ReloadShotgun(CBasePlayerWeapon *BaseWeapon, int)
+{
+	if (!GET_CUSTOM_WEAPON(BaseWeapon))
+	{
+		return static_cast<void(__fastcall *)(CBasePlayerWeapon *)>(FWeapon_Reload[WType::Shotgun])(BaseWeapon);
+	}
+	else
+	{
+		Weapon = &Weapons[GET_WEAPON_KEY(BaseWeapon)];
+
+		if (Weapon->AnimR >= WShotgunReloadType::RifleStyle)
+			return Weapon_Reload(BaseWeapon, TRUE);
+
+		if (BaseWeapon->m_pPlayer->m_rgAmmo[BaseWeapon->m_iPrimaryAmmoType] <= 0)
+			return;
+
+		if (BaseWeapon->m_iClip >= Weapon->Clip)
+			return;
+
+		if (BaseWeapon->m_fInSpecialReload == 0)
+		{
+			SetAnimation2(BaseWeapon->m_pPlayer->edict(), PLAYER_RELOAD);
+			SendWeaponAnim(BaseWeapon, XM1014_START_RELOAD);
+
+			BaseWeapon->m_fInSpecialReload = 1;
+			BaseWeapon->m_flNextSecondaryAttack = BaseWeapon->m_flTimeWeaponIdle = BaseWeapon->m_pPlayer->m_flNextAttack = 0.55f;
+			BaseWeapon->m_flNextPrimaryAttack = 0.55f;
+		}
+		else if (BaseWeapon->m_fInSpecialReload == 1)
+		{
+			if (BaseWeapon->m_flTimeWeaponIdle > 0.f)
+				return;
+
+			BaseWeapon->m_fInSpecialReload = 2;
+
+			if (!(Weapon->Flags & WFlag::ShotgunCustomReloadSound))
+			{
+				if (RANDOM_LONG(0, 1))
+					EMIT_SOUND(ENT(BaseWeapon->m_pPlayer->pev), CHAN_ITEM, "weapons/reload1.wav", VOL_NORM, ATTN_NORM, 85 + RANDOM_LONG(0, 31));
+				else
+					EMIT_SOUND(ENT(BaseWeapon->m_pPlayer->pev), CHAN_ITEM, "weapons/reload3.wav", VOL_NORM, ATTN_NORM, 85 + RANDOM_LONG(0, 31));
+			}
+
+			SendWeaponAnim(BaseWeapon, XM1014_RELOAD);
+			BaseWeapon->m_flTimeWeaponIdle = BaseWeapon->m_flNextReload = Weapon->AnimR_Duration;
+		}
+		else
+		{
+			BaseWeapon->m_iClip++;
+			BaseWeapon->m_pPlayer->m_rgAmmo[BaseWeapon->m_iPrimaryAmmoType]--;
+			BaseWeapon->m_fInSpecialReload = 1;
+		}
+	}
+}
+
+static void __fastcall Weapon_ReloadShotgunReGameDLL(CBasePlayerWeapon *BaseWeapon, int)
 {
 	Weapon = NULL;
+	int InSpecialReload;
 
 	if (GET_CUSTOM_WEAPON(BaseWeapon))
 	{
-		if ((Weapon = &Weapons[GET_WEAPON_KEY(BaseWeapon)])->AnimR)
+		Weapon = &Weapons[GET_WEAPON_KEY(BaseWeapon)];
+
+		if (Weapon->AnimR >= WShotgunReloadType::RifleStyle)
 			return Weapon_Reload(BaseWeapon, TRUE);
+
+		InSpecialReload = BaseWeapon->m_fInSpecialReload;
 	}
 
-	int WeaponIdle = BaseWeapon->m_fInSpecialReload;
-
-	static_cast<void(__fastcall *)(CBasePlayerWeapon *)>(FWeapon_Reload[WType::ShotGun])(BaseWeapon);
+	static_cast<void(__fastcall *)(CBasePlayerWeapon *)>(FWeapon_Reload[WType::Shotgun])(BaseWeapon);
 
 	if (Weapon)
 	{
-		if (WeaponIdle == 1 && BaseWeapon->m_flNextReload == 0.3f)
-		{
-			SendWeaponAnim(BaseWeapon, DEFAULT_SHOTGUN_RELOAD);
+		if (InSpecialReload == 1 && BaseWeapon->m_fInSpecialReload == 2)
 			BaseWeapon->m_flTimeWeaponIdle = BaseWeapon->m_flNextReload = Weapon->AnimR_Duration;
-		}
 	}
 }
 
@@ -530,18 +636,58 @@ static void __fastcall Weapon_Idle(CBasePlayerWeapon *BaseWeapon, int)
 		}
 	}
 	else static_cast<void(__fastcall *)(CBasePlayerWeapon *, int)>(FWeapon_Idle[Rifle])(BaseWeapon, NULL);
-
-	//if (GET_WEAPON_FID(BaseWeapon) == Pistol)
-	//	static_cast<void(__fastcall *)(CBasePlayerWeapon *, int)>(FWeapon_Idle[Pistol])(BaseWeapon, NULL);
-	//else
 }
 
-static void __fastcall Weapon_IdleShotGun(CBasePlayerWeapon *BaseWeapon, int)
+static void __fastcall Weapon_IdleShotgun(CBasePlayerWeapon *BaseWeapon, int)
+{
+	if (GET_CUSTOM_WEAPON(BaseWeapon))
+	{
+		Weapon = &Weapons[GET_WEAPON_KEY(BaseWeapon)];
+
+		if (Weapon->AnimR)
+			return Weapon_Idle(BaseWeapon, NULL);
+
+		BaseWeapon->ResetEmptySound();
+		BaseWeapon->m_pPlayer->GetAutoaimVector(AUTOAIM_5DEGREES);
+	
+		if (((CXM1014 *)BaseWeapon)->m_flPumpTime && ((CXM1014 *)BaseWeapon)->m_flPumpTime < 0.f)
+			((CXM1014 *)BaseWeapon)->m_flPumpTime = 0;
+
+		if (BaseWeapon->m_flTimeWeaponIdle < 0.f)
+		{
+			if (BaseWeapon->m_iClip == 0 && BaseWeapon->m_fInSpecialReload == 0 && BaseWeapon->m_pPlayer->m_rgAmmo[BaseWeapon->m_iPrimaryAmmoType])
+			{
+				BaseWeapon->Reload();
+			}
+			else if (BaseWeapon->m_fInSpecialReload != 0)
+			{
+				if (BaseWeapon->m_iClip != Weapon->Clip && BaseWeapon->m_pPlayer->m_rgAmmo[BaseWeapon->m_iPrimaryAmmoType])
+				{
+					BaseWeapon->Reload();
+				}
+				else
+				{
+					SendWeaponAnim(BaseWeapon, XM1014_PUMP);
+
+					BaseWeapon->m_fInSpecialReload = 0;
+					BaseWeapon->m_flTimeWeaponIdle = 1.5f;
+				}
+			}
+			else
+			{
+				SendWeaponAnim(BaseWeapon, XM1014_IDLE);
+			}
+		}
+	}
+	else static_cast<void(__fastcall *)(CBasePlayerWeapon *, int)>(FWeapon_Idle[WType::Shotgun])(BaseWeapon, NULL);
+}
+
+static void __fastcall Weapon_IdleShotgunReGameDLL(CBasePlayerWeapon *BaseWeapon, int)
 {
 	if (GET_CUSTOM_WEAPON(BaseWeapon) && Weapons[GET_WEAPON_KEY(BaseWeapon)].AnimR)
 		return Weapon_Idle(BaseWeapon, NULL);
-
-	static_cast<void(__fastcall *)(CBasePlayerWeapon *, int)>(FWeapon_Idle[WType::ShotGun])(BaseWeapon, NULL);
+		
+	static_cast<void(__fastcall *)(CBasePlayerWeapon *, int)>(FWeapon_Idle[WType::Shotgun])(BaseWeapon, NULL);
 }
 
 static void __fastcall Weapon_Holster(CBasePlayerWeapon *BaseWeapon, int, int SkipLocal)
@@ -567,7 +713,7 @@ static void __fastcall Weapon_Holster(CBasePlayerWeapon *BaseWeapon, int, int Sk
 		StatusIcon(ENT(BaseWeapon->m_pPlayer->pev), ICON_DISABLED, CurrentIcon.Name, NULL, NULL, NULL);
 	}
 
-	if (Weapon->Type == WType::ShotGun && Weapon->AnimR < WShotGunReloadType::RifleStyle)
+	if (Weapon->Type == WType::Shotgun && Weapon->AnimR < WShotgunReloadType::RifleStyle)
 		BaseWeapon->m_fInSpecialReload = NULL;
 
 	int Forward;
@@ -883,11 +1029,11 @@ static void TraceAttackContinue(CBaseEntity *BaseEntity, entvars_t *AttackerVars
 	}
 	}*/
 
-	TRV *TRValues = (Weapon->A2I == A2_Switch && GET_WEAPON_INATTACK2(BaseWeapon)) ? Weapon->A2V->TRV : Weapon->TRV;
+	//TRV *TRValues = (Weapon->A2I == A2_Switch && GET_WEAPON_INATTACK2(BaseWeapon)) ? Weapon->A2V->TRV : Weapon->TRV;
 
 	// CURRENTLY ONLY ONE TRACEATTACK IS AVAILABLE
-	if (Weapon->TRI == TR_LaserBeam)
-		TraceAttack_LaserBeam(GET_WEAPON_OWNER(BaseWeapon), TR->vecEndPos, TRValues->Time, TRValues->Size, TRValues->RMin, TRValues->RMax, TRValues->R, TRValues->G, TRValues->B);
+	//if (Weapon->TRI == TR_LaserBeam)
+	//	TraceAttack_LaserBeam(GET_WEAPON_OWNER(BaseWeapon), TR->vecEndPos, TRValues->Time, TRValues->Size, TRValues->RMin, TRValues->RMax, TRValues->R, TRValues->G, TRValues->B);
 }
 
 static void __fastcall ProjectileTouch(CBaseEntity *BaseEntity, int, CBaseEntity *BaseEntityOther)
@@ -970,7 +1116,7 @@ void GiveWeapon(edict_t *PlayerEdict, int Index)
 			case A2_MultiShot: SET_WEAPON_A2OFFSET(BaseWeapon, Weapon->A2V->WA2_MULTISHOT_VALUE); break;
 		}
 	}
-
+	
 	MDLL_Spawn(WeaponEdict);
 	BaseWeapon->m_iDefaultAmmo = NULL;
 	MDLL_Touch(WeaponEdict, PlayerEdict);
@@ -1034,7 +1180,7 @@ void EmitSound(edict_t *PlayerEdict, int Channel, const char *Sample, float Volu
 	{
 		CBasePlayerWeapon *BaseWeapon = (CBasePlayerWeapon *)((CBasePlayer *)PlayerEdict->pvPrivateData)->m_pActiveItem;
 
-		if (GET_CUSTOM_WEAPON(BaseWeapon) && Weapons[GET_WEAPON_KEY(BaseWeapon)].Flags & WFlag::ShotGunCustomReloadSound)
+		if (GET_CUSTOM_WEAPON(BaseWeapon) && Weapons[GET_WEAPON_KEY(BaseWeapon)].Flags & WFlag::ShotgunCustomReloadSound)
 			RETURN_META(MRES_SUPERCEDE);
 	}
 }
@@ -1291,13 +1437,13 @@ static void PerformDamage(edict_t *PlayerEdict, float Radius, float Damage, CBas
 	{
 		if (!TargetEdict->pvPrivateData || TargetEdict == PlayerEdict)
 			continue;
-		
+
 		if (!TargetEdict->v.takedamage)
 			continue;
 
 		BaseEntity = (CBaseEntity *)TargetEdict->pvPrivateData;
 		Origin = TargetEdict->v.origin;
-		
+
 		if (!BaseEntity->IsPlayer())
 			Origin = Origin + (TargetEdict->v.mins + TargetEdict->v.maxs) * 0.5f;
 
@@ -1311,7 +1457,7 @@ static void PerformDamage(edict_t *PlayerEdict, float Radius, float Damage, CBas
 			if (TR.pHit != TargetEdict)
 				continue;
 		}
-		
+
 		BaseEntity->TakeDamage(PlayerEntVars, PlayerEntVars, Damage, DMG_SLASH);
 
 		if (BaseEntity->IsPlayer())
@@ -1498,7 +1644,7 @@ static void Attack2_InstaSwitch(edict_t *PlayerEdict, CBasePlayerWeapon *BaseWea
 		case TRUE:
 		{
 			SET_WEAPON_INATTACK2(BaseWeapon, FALSE);
-			ClientPrint(PlayerEdict, HUD_PRINTCENTER, "Switched to Default");
+			ClientPrint(PlayerEdict, HUD_PRINTCENTER, Weapon->A2V->WA2_INSTASWITCH_NAME2);
 			break;
 		}
 	}
@@ -1515,7 +1661,7 @@ static Vector VectorToAngles(Vector InPut)
 
 static cell ShootProjectileContact(edict_t *LauncherEdict, int ProjectileID)
 {
-	edict_t *ProjectileEdict = g_engfuncs.pfnCreateNamedEntity(ProjectileClassName);
+	edict_t *ProjectileEdict = CREATE_NAMED_ENTITY(MAKE_STRING("info_null"));
 	CBaseEntity *BaseEntity = ((CBaseEntity *)ProjectileEdict->pvPrivateData);
 	entvars_t *ProjectileEntVars = BaseEntity->pev;
 	entvars_t *LauncherEntVars = &LauncherEdict->v;
@@ -1632,7 +1778,6 @@ void ServerActivate(edict_t *P1, int TotalEdicts, int TotalClients)
 		}
 	}
 
-	ProjectileClassName = ALLOC_STRING("info_null");
 	RETURN_META(MRES_IGNORED);
 }
 
@@ -1673,15 +1818,19 @@ void ServerActivate_Post(edict_t *pEdictList, int edictCount, int clientMax)
 		HookEntityFW(WeaponName, EO_Item_Deploy, Weapon_Deploy, FWeapon_Deploy[Index]);
 		HookEntityFW(WeaponName, EO_Weapon_PrimaryAttack, Weapon_PrimaryAttack, FWeapon_PrimaryAttack[Index]);
 		HookEntityFW(WeaponName, EO_Weapon_SecondaryAttack, Weapon_SecondaryAttack, FWeapon_SecondaryAttack[Index]);
-		HookEntityFW(WeaponName, EO_Weapon_Reload, Index == 1 ? Weapon_ReloadShotGun : Weapon_Reload, FWeapon_Reload[Index]);
-		HookEntityFW(WeaponName, EO_Item_PostFrame, Weapon_PostFrame, FWeapon_PostFrame[Index]);
-		HookEntityFW(WeaponName, EO_Weapon_Idle, Index == 1 ? Weapon_IdleShotGun : Weapon_Idle, FWeapon_Idle[Index]);
+		HookEntityFW(WeaponName, EO_Weapon_Reload, Index == 1 ? (RunningOnReGameDLL ? Weapon_ReloadShotgunReGameDLL : Weapon_ReloadShotgun) : Weapon_Reload, FWeapon_Reload[Index]);
+		HookEntityFW(WeaponName, EO_Item_PostFrame, RunningOnReGameDLL ? Weapon_PostFrameReGameDLL : Weapon_PostFrame, FWeapon_PostFrame[Index]);
+		HookEntityFW(WeaponName, EO_Weapon_Idle, Index == 1 ? (RunningOnReGameDLL ? Weapon_IdleShotgunReGameDLL : Weapon_IdleShotgun) : Weapon_Idle, FWeapon_Idle[Index]);
 		HookEntityFW(WeaponName, EO_Item_Holster, Weapon_Holster, FWeapon_Holster[Index]);
 		HookEntityFW(WeaponName, EO_Item_GetMaxSpeed, Weapon_GetMaxSpeed, FWeapon_GetMaxSpeed[Index]);
 		HookEntityFW(WeaponName, EO_Weapon_ExtractAmmo, Weapon_ExtractAmmo, FWeapon_ExtractAmmo[Index]);
 		HookEntityFW(WeaponName, EO_Weapon_SendWeaponAnim, Weapon_SendWeaponAnim, FWeapon_Dump);
+
+		if (RunningOnReGameDLL)
+			HookEntityFW(WeaponName, EO_Item_GetItemInfo, Weapon_GetItemInfo, FWeapon_GetItemInfo[Index]);
 	}
 
+	FWeapon_Reload[3] = GetEntityFW("weapon_m3", EO_Weapon_Reload);
 	HookEntityFW("player", EO_TakeDamage, Player_TakeDamage, FPlayer_TakeDamage);
 	HookEntityFW("player", EO_GiveAmmo, Player_GiveAmmo, FPlayer_GiveAmmo);
 	HookEntityFW("weaponbox", EO_Spawn, WeaponBox_Spawn, FWeaponBox_Spawn);
@@ -1698,9 +1847,9 @@ void ServerActivate_Post(edict_t *pEdictList, int edictCount, int clientMax)
 	{
 		CWeapon *Weapon = &Weapons[Index];
 		II.pszName = GetWeaponName(Weapon->ID); //Weapon->Name;
-		II.pszAmmo1 = RunningOnReGameDLL ? Ammos[Weapon->AmmoID].Name : "\0";
+		II.pszAmmo1 = Ammos[Weapon->AmmoID].Name;
 		II.iMaxAmmo1 = Ammos[Weapon->AmmoID].Max;
-		II.pszAmmo2 = NULL;
+		II.pszAmmo2 = nullptr;
 		II.iMaxAmmo2 = -1;
 		II.iMaxClip = Weapon->Clip;
 		II.iSlot = WEAPON_SLOTID[Weapon->Type];
@@ -1738,16 +1887,16 @@ void ServerDeactivate(void)
 
 		if (Weapon->A2V)
 		{
-			if (Weapon->A2V->TRV)
-				delete(Weapon->A2V->TRV);
+			//if (Weapon->A2V->TRV)
+			//	delete(Weapon->A2V->TRV);
 
 			delete(Weapon->A2V);
 		}
 
-		if (Weapon->TRV)
+		/*if (Weapon->TRV)
 		{
 			delete(Weapon->TRV);
-		}
+		}*/
 	}
 
 	WeaponCount = NULL;
@@ -1767,18 +1916,21 @@ void OnPluginsUnloaded(void)
 	{
 		WeaponName = GetWeaponName(WEAPON_TYPE_ID[Index]);
 
-		ResetEntityFW(WeaponName, EO_Spawn, Weapon_SpawnPistol, FWeapon_Spawn[Index]);
+		ResetEntityFW(WeaponName, EO_Spawn, FWeapon_SpawnFuncs[Index], FWeapon_Spawn[Index]);
 		ResetEntityFW(WeaponName, EO_Item_AddToPlayer, Weapon_AddToPlayer, FWeapon_AddToPlayer[Index]);
 		ResetEntityFW(WeaponName, EO_Item_Deploy, Weapon_Deploy, FWeapon_Deploy[Index]);
 		ResetEntityFW(WeaponName, EO_Weapon_PrimaryAttack, Weapon_PrimaryAttack, FWeapon_PrimaryAttack[Index]);
 		ResetEntityFW(WeaponName, EO_Weapon_SecondaryAttack, Weapon_SecondaryAttack, FWeapon_SecondaryAttack[Index]);
-		ResetEntityFW(WeaponName, EO_Weapon_Reload, Index == 1 ? Weapon_ReloadShotGun : Weapon_Reload, FWeapon_Reload[Index]);
+		ResetEntityFW(WeaponName, EO_Weapon_Reload, Index == 1 ? (RunningOnReGameDLL ? Weapon_ReloadShotgunReGameDLL : Weapon_ReloadShotgun) : Weapon_Reload, FWeapon_Reload[Index]);
 		ResetEntityFW(WeaponName, EO_Item_PostFrame, RunningOnReGameDLL ? Weapon_PostFrameReGameDLL : Weapon_PostFrame, FWeapon_PostFrame[Index]);
-		ResetEntityFW(WeaponName, EO_Weapon_Idle, Index == 1 ? Weapon_IdleShotGun : Weapon_Idle, FWeapon_Idle[Index]);
+		ResetEntityFW(WeaponName, EO_Weapon_Idle, Index == 1 ? (RunningOnReGameDLL ? Weapon_IdleShotgunReGameDLL : Weapon_IdleShotgun) : Weapon_Idle, FWeapon_Idle[Index]);
 		ResetEntityFW(WeaponName, EO_Item_Holster, Weapon_Holster, FWeapon_Holster[Index]);
 		ResetEntityFW(WeaponName, EO_Item_GetMaxSpeed, Weapon_GetMaxSpeed, FWeapon_GetMaxSpeed[Index]);
 		ResetEntityFW(WeaponName, EO_Weapon_ExtractAmmo, Weapon_ExtractAmmo, FWeapon_ExtractAmmo[Index]);
 		ResetEntityFW(WeaponName, EO_Weapon_SendWeaponAnim, Weapon_SendWeaponAnim, FWeapon_Dump);
+
+		if (RunningOnReGameDLL)
+			ResetEntityFW(WeaponName, EO_Item_GetItemInfo, Weapon_GetItemInfo, FWeapon_GetItemInfo[Index]);
 	}
 
 	ResetEntityFW("player", EO_TakeDamage, Player_TakeDamage, FPlayer_TakeDamage);

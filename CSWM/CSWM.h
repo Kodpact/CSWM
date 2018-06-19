@@ -110,7 +110,7 @@ int ammo_357sig;
 enum WType
 {
 	Pistol,
-	ShotGun,
+	Shotgun,
 	Rifle,
 	Sniper,
 };
@@ -136,7 +136,7 @@ enum WReturn
 	SUPERCEDE,
 };
 
-enum WShotGunReloadType
+enum WShotgunReloadType
 {
 	M3Style = -1,
 	XM1014Style,
@@ -187,8 +187,7 @@ public:
 	int Flags;
 
 	CIcon Icon;
-	int TRI;
-	TRV *TRV;
+
 	int A2I;
 	A2V *A2V;
 
@@ -269,7 +268,7 @@ enum WFlag
 	SoloClip = BIT(2),
 	NoDecal = BIT(3),
 	NoSmoke = BIT(3),
-	ShotGunCustomReloadSound = BIT(4),
+	ShotgunCustomReloadSound = BIT(4),
 	CustomPrimaryAttack = BIT(5),
 	AutoSniper = BIT(6),
 	CustomIdleAnim = BIT(7),
@@ -289,3 +288,17 @@ enum WFlag
 
 void GiveWeaponByName(edict_t *PlayerEdict, const char *Name);
 void GiveWeapon(edict_t *PlayerEdict, int Index);
+
+
+
+
+enum xm1014_e
+{
+	XM1014_IDLE,
+	XM1014_FIRE1,
+	XM1014_FIRE2,
+	XM1014_RELOAD,
+	XM1014_PUMP,
+	XM1014_START_RELOAD,
+	XM1014_DRAW,
+};

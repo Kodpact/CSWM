@@ -24,6 +24,7 @@
 #include <dlls\monsters.h>
 #include <dlls\weapons.h>
 #include <engine\maintypes.h>
+#include <engine\studio.h>
 
 #include <amtl\am-vector.h>
 

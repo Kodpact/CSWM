@@ -18,7 +18,7 @@ cell ProjectileCount = NULL;
 
 BOOL SV_Log, RunningOnReGameDLL;
 const cell WEAPON_TYPE_ID[] = { CSW_P228, CSW_XM1014, CSW_AK47, CSW_AWP };
-
+const float WEAPON_DEFAULT_DELAY[] = { 0.f, 0.2f, 0.f, 1.3f, 0.f, 0.3f, 0.f, 0.1f, 0.1f, 0.f, 0.1f, 0.2f, 0.1f, 0.3f, 0.1f, 0.1f, 0.1f, 0.2f, 1.5f, 0.1f, 0.1f, 0.9f, 0.1f, 0.1f, 0.3f, 0.0f, 0.2f, 0.1f, 0.1f, 0.f, 0.1f };
 int MI_Trail, MI_Explosion, MI_Smoke;
 
 void PrecacheModule(void)
@@ -217,7 +217,7 @@ cell AMX_NATIVE_CALL BuildWeaponTraceAttack(AMX *amx, cell *params)
 	if (Index < 0 || Index >= WeaponCount)
 		return NULL;
 
-	CWeapon *Weapon = &Weapons[Index];
+	/*CWeapon *Weapon = &Weapons[Index];
 	Weapon->TRV = new TRV;
 
 	switch (Weapon->TRI = params[2])
@@ -257,7 +257,7 @@ cell AMX_NATIVE_CALL BuildWeaponTraceAttack(AMX *amx, cell *params)
 			break;
 		}
 	}
-
+	*/
 	return NULL;
 }
 
@@ -305,9 +305,8 @@ cell AMX_NATIVE_CALL BuildWeaponAttack2(AMX *amx, cell *params)
 		return NULL;
 
 	CWeapon *Weapon = &Weapons[Index];
-	char Buffer[32];
 	Weapon->A2V = new A2V;
-	Weapon->A2V->TRV = NULL;
+	//Weapon->A2V->TRV = NULL;
 
 	switch (Weapon->A2I = params[2])
 	{
@@ -378,8 +377,8 @@ cell AMX_NATIVE_CALL BuildWeaponAttack2(AMX *amx, cell *params)
 			Weapon->A2V->WA2_INSTASWITCH_DELAY = amx_ctof(*MF_GetAmxAddr(amx, params[4]));
 			Weapon->A2V->WA2_INSTASWITCH_DAMAGE = amx_ctof(*MF_GetAmxAddr(amx, params[5]));
 			Weapon->A2V->WA2_INSTASWITCH_RECOIL = amx_ctof(*MF_GetAmxAddr(amx, params[6]));
-			sprintf(Buffer, "Switched to %s", strcelltochar(MF_GetAmxAddr(amx, params[7])));
-			Weapon->A2V->WA2_INSTASWITCH_NAME = STRING(ALLOC_STRING(Buffer));
+			Weapon->A2V->WA2_INSTASWITCH_NAME = STRING(ALLOC_STRING(MF_GetAmxString(amx, params[7], NULL, NULL)));
+			Weapon->A2V->WA2_INSTASWITCH_NAME2 = STRING(ALLOC_STRING(MF_GetAmxString(amx, params[8], NULL, NULL)));
 		}
 	}
 
@@ -724,7 +723,7 @@ static cell AMX_NATIVE_CALL RadiusDamage2(AMX *amx, cell *params)
 		}
 
 		BaseEntity = (CBaseEntity *)TargetEdict->pvPrivateData;
-		BaseEntity->TakeDamage(AttackerEntVars, AttackerEntVars, (TargetEdict == Owner ? 0.4 : 1.0) * ((Damage * Radius) / (TargetEdict->v.origin - Origin).Length()), DMG_EXPLOSION);
+		BaseEntity->TakeDamage(AttackerEntVars, AttackerEntVars, (TargetEdict == Owner ? 0.4 : 1.0) * ((Damage * Radius) / (TargetEdict->v.origin - Origin).Length()), DMG_SLASH/*DMG_EXPLOSION*/);
 	}
 
 	return NULL;
@@ -776,6 +775,184 @@ cell AMX_NATIVE_CALL PrecacheWeaponModel2(AMX *amx, cell *params)
 	return (cell)Model;
 }
 
+static int GetSequenceFlags(void *pmodel, entvars_t *pev)
+{
+	studiohdr_t *pstudiohdr = (studiohdr_t *)pmodel;
+
+	if (!pstudiohdr || pev->sequence >= pstudiohdr->numseq)
+	{
+		return 0;
+	}
+
+	mstudioseqdesc_t *pseqdesc = (mstudioseqdesc_t *)((byte *)pstudiohdr + pstudiohdr->seqindex) + int(pev->sequence);
+	return pseqdesc->flags;
+}
+
+static int GetSequenceFlags(CBasePlayer *BasePlayer)
+{
+	void *pmodel = GET_MODEL_PTR(ENT(BasePlayer->pev));
+	return ::GetSequenceFlags(pmodel, BasePlayer->pev);
+}
+
+static void GetSequenceInfo(void *pmodel, entvars_t *pev, float *pflFrameRate, float *pflGroundSpeed)
+{
+	studiohdr_t *pstudiohdr = (studiohdr_t *)pmodel;
+
+	if (!pstudiohdr)
+	{
+		return;
+	}
+
+	if (pev->sequence >= pstudiohdr->numseq)
+	{
+		*pflFrameRate = 0;
+		*pflGroundSpeed = 0;
+		return;
+	}
+
+	mstudioseqdesc_t *pseqdesc = (mstudioseqdesc_t *)((byte *)pstudiohdr + pstudiohdr->seqindex) + int(pev->sequence);
+	if (pseqdesc->numframes <= 1)
+	{
+		*pflFrameRate = 256.0f;
+		*pflGroundSpeed = 0.0f;
+		return;
+	}
+
+	*pflFrameRate = pseqdesc->fps * 256.0f / (pseqdesc->numframes - 1);
+	*pflGroundSpeed = Q_sqrt(pseqdesc->linearmovement[0] * pseqdesc->linearmovement[0] + pseqdesc->linearmovement[1] * pseqdesc->linearmovement[1] + pseqdesc->linearmovement[2] * pseqdesc->linearmovement[2]);
+	*pflGroundSpeed = *pflGroundSpeed * pseqdesc->fps / (pseqdesc->numframes - 1);
+}
+
+static void ResetSequenceInfo(CBasePlayer *BasePlayer)
+{
+	void *Model = GET_MODEL_PTR(ENT(BasePlayer->pev));
+
+	GetSequenceInfo(Model, BasePlayer->pev, &BasePlayer->m_flFrameRate, &BasePlayer->m_flGroundSpeed);
+	BasePlayer->m_fSequenceLoops = ((GetSequenceFlags(BasePlayer) & STUDIO_LOOPING) != 0);
+	BasePlayer->pev->animtime = gpGlobals->time;
+	//BasePlayer->pev->framerate = 1.0f;
+	BasePlayer->m_fSequenceFinished = FALSE;
+	BasePlayer->m_flLastEventCheck = gpGlobals->time;
+}
+
+int LookupActivity(void *pmodel, entvars_t *pev, int activity)
+{
+	studiohdr_t *pstudiohdr = (studiohdr_t *)pmodel;
+
+	if (!pstudiohdr)
+	{
+		return 0;
+	}
+
+	mstudioseqdesc_t *pseqdesc;
+
+	int i;
+	int weightTotal = 0;
+	int activitySequenceCount = 0;
+	int weight = 0;
+	int select;
+
+	pseqdesc = (mstudioseqdesc_t *)((byte *)pstudiohdr + pstudiohdr->seqindex);
+
+	for (i = 0; i < pstudiohdr->numseq; i++)
+	{
+		if (pseqdesc[i].activity == activity)
+		{
+			weightTotal += pseqdesc[i].actweight;
+			activitySequenceCount++;
+		}
+	}
+
+	if (activitySequenceCount > 0)
+	{
+		if (weightTotal)
+		{
+			int which = RANDOM_LONG(0, weightTotal - 1);
+
+			for (i = 0; i < pstudiohdr->numseq; i++)
+			{
+				if (pseqdesc[i].activity == activity)
+				{
+					weight += pseqdesc[i].actweight;
+
+					if (weight > which)
+					{
+						return i;
+					}
+				}
+			}
+		}
+		else
+		{
+			select = RANDOM_LONG(0, activitySequenceCount - 1);
+
+			for (i = 0; i < pstudiohdr->numseq; i++)
+			{
+				if (pseqdesc[i].activity == activity)
+				{
+					if (select == 0)
+					{
+						return i;
+					}
+
+					select--;
+				}
+			}
+		}
+	}
+
+	return ACT_INVALID;
+}
+
+int LookupActivity(CBasePlayer *BasePlayer, int activity)
+{
+	void *pmodel = GET_MODEL_PTR(ENT(BasePlayer->pev));
+	return ::LookupActivity(pmodel, BasePlayer->pev, activity);
+}
+
+void SetAnimation(edict_t *PlayerEdict, int Animation, Activity IActivity, float FrameRate=1.0)
+{
+	entvars_t *PlayerEntVars = &PlayerEdict->v;
+	CBasePlayer *BasePlayer = (CBasePlayer *)PlayerEdict->pvPrivateData;
+	
+	if (IActivity == ACT_SWIM || IActivity == ACT_LEAP || IActivity == ACT_HOVER)
+		return;
+
+	// WHAT DOES THIS THING DO ? [ BLOCKS ANIMATION PREVENTION ON RUNNING ]
+	BasePlayer->m_flLastFired = gpGlobals->time;
+
+	PlayerEntVars->frame = 0.f;
+	PlayerEntVars->framerate = FrameRate;
+	PlayerEntVars->sequence = Animation;
+	PlayerEntVars->animtime = gpGlobals->time;
+
+	//BasePlayer->m_fSequenceLoops = NULL;
+	//BasePlayer->m_fSequenceFinished = FALSE;
+	BasePlayer->m_Activity = IActivity;
+	BasePlayer->m_IdealActivity = IActivity;
+
+	BasePlayer->m_flGroundSpeed = 0.f;
+	BasePlayer->m_flFrameRate = FrameRate;
+	BasePlayer->m_flLastEventCheck = gpGlobals->time;
+	ResetSequenceInfo(BasePlayer);
+}
+
+static cell AMX_NATIVE_CALL _SetAnimation(AMX *amx, cell *params)
+{
+	edict_t *PlayerEdict = EDICT_FOR_NUM(params[1]);
+	
+	if (!PlayerEdict->pvPrivateData)
+		return NULL;
+
+	SetAnimation(PlayerEdict, params[1], (Activity)params[2], amx_ctof(params[4]));
+	return NULL;
+}
+
+cell AMX_NATIVE_CALL GetWeaponDefaultDelay(AMX *amx, cell *params)
+{
+	return amx_ftoc(WEAPON_DEFAULT_DELAY[params[1]]);
+}
+
 AMX_NATIVE_INFO AMXX_NATIVES[] =
 {
 	{ "CreateWeapon", CreateWeapon },
@@ -818,6 +995,8 @@ AMX_NATIVE_INFO AMXX_NATIVES[] =
 	{ "SetPlayerViewModel", SetPlayerViewModel },
 	{ "SetPlayerWeapModel", SetPlayerWeapModel },
 	{ "PrecacheWeaponModel2", PrecacheWeaponModel2 },
+	{ "SetAnimation", _SetAnimation },
+	{ "GetWeaponDefaultDelay", GetWeaponDefaultDelay },
 	{ NULL, NULL }
 };
 

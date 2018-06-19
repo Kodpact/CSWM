@@ -47,7 +47,6 @@ struct CAutoPistol
 
 struct A2V
 {
-	TRV *TRV;
 	CIcon Icon;
 
 	int IParamA;
@@ -67,6 +66,7 @@ struct A2V
 	float FParamH;
 	
 	const char *SParamA;
+	const char *SParamB;
 };
 
 #define WA2_ZOOM_MODE IParamA
@@ -121,6 +121,7 @@ struct A2V
 #define WA2_INSTASWITCH_DAMAGE FParamB
 #define WA2_INSTASWITCH_RECOIL FParamC
 #define WA2_INSTASWITCH_NAME SParamA
+#define WA2_INSTASWITCH_NAME2 SParamB
 
 #include "CSWM.h"
 
