@@ -16,7 +16,7 @@ cell WeaponCount = NULL;
 cell AmmoCount = AMMO_MAX_TYPES;
 cell ProjectileCount = NULL;
 
-BOOL SV_Log, RunningOnReGameDLL;
+BOOL SV_Log;
 const cell WEAPON_TYPE_ID[] = { CSW_P228, CSW_XM1014, CSW_AK47, CSW_AWP };
 const float WEAPON_DEFAULT_DELAY[] = { 0.f, 0.2f, 0.f, 1.3f, 0.f, 0.3f, 0.f, 0.1f, 0.1f, 0.f, 0.1f, 0.2f, 0.1f, 0.3f, 0.1f, 0.1f, 0.1f, 0.2f, 1.5f, 0.1f, 0.1f, 0.9f, 0.1f, 0.1f, 0.3f, 0.0f, 0.2f, 0.1f, 0.1f, 0.f, 0.1f };
 int MI_Trail, MI_Explosion, MI_Smoke;
@@ -27,7 +27,6 @@ void PrecacheModule(void)
 	MI_Explosion = PRECACHE_MODEL("sprites/fexplo.spr");
 	MI_Smoke = PRECACHE_MODEL("sprites/steam1.spr");
 }
-
 
 void strlower(char *String)
 {
@@ -575,10 +574,10 @@ cell AMX_NATIVE_CALL CreateProjectile(AMX *amx, cell *params)
 	return ProjectileCount - 1;
 }
 
-inline cell CallShootProjectileContact(int LauncherEdict, int ProjectileID);
+cell ShootProjectileTimed(edict_t *LauncherEdict, int ProjectileID);
 static cell AMX_NATIVE_CALL ShootProjectile(AMX *amx, cell *params)
 {
-	return CallShootProjectileContact(params[1], params[2]);
+	return ShootProjectileTimed(EDICT_FOR_NUM(params[1]), params[2]);
 }
 
 static cell AMX_NATIVE_CALL Player_GiveAmmo(AMX *amx, cell *params)
@@ -703,7 +702,7 @@ static cell AMX_NATIVE_CALL RadiusDamage2(AMX *amx, cell *params)
 	int CastTeam = AttackerEntVars->team;
 	float Damage = amx_ctof(params[3]);
 	CBaseEntity *BaseEntity;
-	BOOL Penetrate = params[4];
+	BOOL Penetrate = params[5];
 	TraceResult TR;
 	
 	while ((TargetEdict = FIND_ENTITY_IN_SPHERE(TargetEdict, Origin, Radius)) != SVGame_Edicts)
@@ -944,7 +943,7 @@ static cell AMX_NATIVE_CALL _SetAnimation(AMX *amx, cell *params)
 	if (!PlayerEdict->pvPrivateData)
 		return NULL;
 
-	SetAnimation(PlayerEdict, params[1], (Activity)params[2], amx_ctof(params[4]));
+	SetAnimation(PlayerEdict, params[2], (Activity)params[3], amx_ctof(params[4]));
 	return NULL;
 }
 
@@ -1000,12 +999,7 @@ AMX_NATIVE_INFO AMXX_NATIVES[] =
 	{ NULL, NULL }
 };
 
-bool ReGameDLL_API_Initialize();
-
 void OnAmxxAttach(void)
 {
-	if (ReGameDLL_API_Initialize())
-		RunningOnReGameDLL = TRUE;
-
 	MF_AddNatives(AMXX_NATIVES);
 }

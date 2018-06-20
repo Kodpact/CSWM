@@ -278,6 +278,7 @@ enum WFlag
 	KnifeAttack_ScreenShake = BIT(10),
 	KnifeAttack_Penetration = BIT(11),
 	KnifeAttack_Accurate = BIT(12),
+	KnifeAttack_Knockback = BIT(13),
 };
 
 #define WEAPON_FLAG_NOHUD (1 << 0)
