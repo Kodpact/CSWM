@@ -1,5 +1,5 @@
 # [CSWM](https://forums.alliedmods.net/showthread.php?t=308229)
-[![Opened Issues](https://isitmaintained.com/project/BeqaGurgenidze/CSWM)]
+[![Opened Issues(http://isitmaintained.com/badge/open/beqaGurgenidze/CSWM.svg)]
 
 Counter-Strike Weapon Mod (:gun:).
 
