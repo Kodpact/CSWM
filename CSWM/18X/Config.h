@@ -2,8 +2,8 @@
 
 // Module info
 #define MODULE_NAME "CSWM"
-#define MODULE_VERSION "1.49 Beta"
-#define MODULE_VERSION_FLOAT 1.46
+#define MODULE_VERSION "1.5"
+#define MODULE_VERSION_FLOAT 1.5f
 #define MODULE_AUTHOR "Ghost"
 #define MODULE_URL "https://forums.alliedmods.net/showthread.php?t=308229"
 #define MODULE_LOGTAG "CSWM"
@@ -88,8 +88,8 @@
 
 // (wd) are Will Day's notes
 // - GetEntityAPI2 functions
-// #define FN_GameDLLInit				GameDLLInit					/* pfnGameInit() */
- #define FN_DispatchSpawn				DispatchSpawn				/* pfnSpawn() */
+// #define FN_GameDLLInit					GameDLLInit					/* pfnGameInit() */
+#define FN_DispatchSpawn				DispatchSpawn				/* pfnSpawn() */
 // #define FN_DispatchThink				DispatchThink				/* pfnThink() */
 // #define FN_DispatchUse				DispatchUse					/* pfnUse() */
 // #define FN_DispatchTouch				DispatchTouch				/* pfnTouch() */
@@ -140,7 +140,7 @@
 // #define FN_AllowLagCompensation		AllowLagCompensation		/* pfnAllowLagCompensation()	(wd) SDK2 */
 
 // - GetEntityAPI2_Post functions
-// #define FN_GameDLLInit_Post					GameDLLInit_Post
+#define FN_GameDLLInit_Post					GameDLLInit_Post
 #define FN_DispatchSpawn_Post				DispatchSpawn_Post
 // #define FN_DispatchThink_Post				DispatchThink_Post
 // #define FN_DispatchUse_Post					DispatchUse_Post
@@ -238,7 +238,7 @@
 // #define FN_LightStyle						LightStyle
 // #define FN_DecalIndex						DecalIndex
 // #define FN_PointContents						PointContents
-// #define FN_MessageBegin						MessageBegin
+// #define FN_MessageBegin							MessageBegin
 // #define FN_MessageEnd						MessageEnd
 // #define FN_WriteByte							WriteByte
 // #define FN_WriteChar							WriteChar

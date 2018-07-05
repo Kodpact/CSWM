@@ -1,23 +1,23 @@
 #include "Module.h"
 
-//extern CWeapon Weapons[MAX_CUSTOM_WEAPONS];
 extern ke::Vector<CWeapon> Weapons;
 extern ke::Vector<CAmmo> Ammos;
 extern ke::Vector<CProjectile> Projectiles;
 extern ke::Vector<ItemInfo> ItemInfoes;
 
+extern BOOL CanPrecache;
 extern BOOL SV_Cheats;
 extern BOOL MP_FriendlyFire;
-extern BOOL ABlood, HBlood;
+extern cvar_t *CVar_LogPointer;
 
-char PathAddOn[32] = "CSWM";
+char PathAddOn[32] = "cswm";
 
 cell WeaponCount = NULL;
 cell AmmoCount = AMMO_MAX_TYPES;
 cell ProjectileCount = NULL;
 
-BOOL SV_Log;
 const cell WEAPON_TYPE_ID[] = { CSW_P228, CSW_XM1014, CSW_AK47, CSW_AWP };
+const char WEAPON_TYPE_NAME[][8] = { "Pistol", "Shotgun", "Rifle", "Sniper" };
 const float WEAPON_DEFAULT_DELAY[] = { 0.f, 0.2f, 0.f, 1.3f, 0.f, 0.3f, 0.f, 0.1f, 0.1f, 0.f, 0.1f, 0.2f, 0.1f, 0.3f, 0.1f, 0.1f, 0.1f, 0.2f, 1.5f, 0.1f, 0.1f, 0.9f, 0.1f, 0.1f, 0.3f, 0.0f, 0.2f, 0.1f, 0.1f, 0.f, 0.1f };
 int MI_Trail, MI_Explosion, MI_Smoke;
 
@@ -28,48 +28,36 @@ void PrecacheModule(void)
 	MI_Smoke = PRECACHE_MODEL("sprites/steam1.spr");
 }
 
-void strlower(char *String)
+void StringToLower(char *String)
 {
 	for (unsigned int Index = NULL; Index < strlen(String); Index++)
 		String[Index] = tolower(String[Index]);
 }
 
-char *strcelltochar(cell *StringA)
-{
-	static char Buffer[MAX_PLAYER_NAME_LENGTH];
-	int Index = NULL;
-	cell *ValuePtr;
-
-	for (Index; Index < MAX_PLAYER_NAME_LENGTH; Index++)
-	{
-		if (!(ValuePtr = (StringA + Index)) || *ValuePtr == '\0')
-			break;
-
-		Buffer[Index] = (char)*ValuePtr;
-	}
-
-	Buffer[Index] = '\0';
-	return Buffer;
-}
-
 cell AMX_NATIVE_CALL CreateWeapon(AMX *amx, cell *params)
 {
+	if (!CanPrecache)
+	{
+		LOG_CONSOLE(PLID, "[CSWM] Can Not Register Weapon At This Time.");
+		return NULL;
+	}
+
 	CWeapon Weapon;
 	memset(&Weapon, NULL, sizeof(CWeapon));
 
-	char Name[MAX_MODEL_NAME], Path[MAX_MODEL_PATH_NAME];
+	char Model[MAX_MODEL_NAME], Path[MAX_MODEL_PATH_NAME];
 
 	cell Length;
-	strcpy(Name, MF_GetAmxString(amx, params[1], NULL, &Length));
-	Weapon.Model = STRING(ALLOC_STRING(Name));
-	Length = sprintf(Path, "models/%s/%s/V.mdl", PathAddOn, Name);
+	strcpy(Model, MF_GetAmxString(amx, params[1], NULL, &Length));
+	Weapon.Model = STRING(ALLOC_STRING(Model));
+	Length = sprintf(Path, "models/%s/%s/V.mdl", PathAddOn, Model);
 	PRECACHE_MODEL(STRING(Weapon.VModel = ALLOC_STRING(Path)));
 	Path[Length - 5] = 'P';
 	PRECACHE_MODEL(STRING(Weapon.PModel = ALLOC_STRING(Path)));
 	Path[Length - 5] = 'W';
 	PRECACHE_MODEL(Weapon.WModel = STRING(ALLOC_STRING(Path)));
-	strlower(Name);
-	sprintf(Path, "sprites/weapon_%s.txt", Name);
+	StringToLower(Model);
+	sprintf(Path, "sprites/weapon_%s.txt", Model);
 	PRECACHE_GENERIC(STRING(ALLOC_STRING(Path)));
 	Weapon.Name = STRING(ALLOC_STRING(MF_GetAmxString(amx, params[3], NULL, NULL)));
 	WType Type = (WType)params[2];
@@ -77,6 +65,9 @@ cell AMX_NATIVE_CALL CreateWeapon(AMX *amx, cell *params)
 	Weapon.ID = WEAPON_TYPE_ID[Type];
 	Weapon.Speed = 250.f;
 	Weapons.append(Weapon);
+
+	if (CVar_LogPointer->value)
+		LOG_CONSOLE(PLID, "[CSWM] Creating Weapon: %s (Type=%s)", Weapon.Name, WEAPON_TYPE_NAME[Weapon.Type]);
 
 	WeaponCount++;
 	return WeaponCount - 1;
@@ -87,13 +78,13 @@ cell AMX_NATIVE_CALL CreateAmmo(AMX *amx, cell *params)
 {
 	if (!Ammos.length())
 		UpdateAmmoList();
-	
+
 	CAmmo Ammo;
 	Ammo.Cost = params[1];
 	Ammo.Amount = params[2];
 	Ammo.Max = params[3];
 	Ammos.append(Ammo);
-	
+
 	AmmoCount++;
 	return AmmoCount - 1;
 }
@@ -209,82 +200,6 @@ cell AMX_NATIVE_CALL BuildWeaponReload2(AMX *amx, cell *params)
 	return NULL;
 }
 
-cell AMX_NATIVE_CALL BuildWeaponTraceAttack(AMX *amx, cell *params)
-{
-	cell Index = params[1];
-
-	if (Index < 0 || Index >= WeaponCount)
-		return NULL;
-
-	/*CWeapon *Weapon = &Weapons[Index];
-	Weapon->TRV = new TRV;
-
-	switch (Weapon->TRI = params[2])
-	{
-		case TR_LaserBeam:
-		{
-			Weapon->TRV->Time = *MF_GetAmxAddr(amx, params[3]);
-			Weapon->TRV->Size = *MF_GetAmxAddr(amx, params[4]);
-			Weapon->TRV->RMin = *MF_GetAmxAddr(amx, params[5]);
-			Weapon->TRV->RMax = *MF_GetAmxAddr(amx, params[6]);
-			Weapon->TRV->R = *MF_GetAmxAddr(amx, params[7]);
-			Weapon->TRV->G = *MF_GetAmxAddr(amx, params[8]);
-			Weapon->TRV->B = *MF_GetAmxAddr(amx, params[9]);
-			break;
-		}
-	}
-
-	if (params[0] / sizeof(cell) <= 9)
-		return NULL;
-
-	if (!Weapon->A2V)
-		return NULL;
-
-	Weapon->A2V->TRV = new TRV;
-
-	switch (Weapon->TRI)
-	{
-		case TR_LaserBeam:
-		{
-			Weapon->A2V->TRV->Time = *MF_GetAmxAddr(amx, params[11]);
-			Weapon->A2V->TRV->Size = *MF_GetAmxAddr(amx, params[12]);
-			Weapon->A2V->TRV->RMin = *MF_GetAmxAddr(amx, params[13]);
-			Weapon->A2V->TRV->RMax = *MF_GetAmxAddr(amx, params[14]);
-			Weapon->A2V->TRV->R = *MF_GetAmxAddr(amx, params[15]);
-			Weapon->A2V->TRV->G = *MF_GetAmxAddr(amx, params[16]);
-			Weapon->A2V->TRV->B = *MF_GetAmxAddr(amx, params[17]);
-			break;
-		}
-	}
-	*/
-	return NULL;
-}
-
-cell AMX_NATIVE_CALL BuildWeaponIcon(AMX *amx, cell *params)
-{
-	cell Index = params[1];
-
-	if (Index < 0 || Index >= WeaponCount)
-		return NULL;
-
-	CWeapon *Weapon = &Weapons[Index];
-	cell Length;
-	Weapon->Icon.Name = STRING(ALLOC_STRING(MF_GetAmxString(amx, params[2], NULL, &Length)));
-	Weapon->Icon.R = params[3];
-	Weapon->Icon.G = params[4];
-	Weapon->Icon.B = params[5];
-
-	if (params[0] / sizeof(cell) <= 5)
-		return NULL;
-
-	Weapon->A2V->Icon.Name = STRING(ALLOC_STRING(MF_GetAmxString(amx, params[6], NULL, &Length)));
-	Weapon->A2V->Icon.R = *MF_GetAmxAddr(amx, params[7]);
-	Weapon->A2V->Icon.G = *MF_GetAmxAddr(amx, params[8]);
-	Weapon->A2V->Icon.B = *MF_GetAmxAddr(amx, params[9]);
-
-	return NULL;
-}
-
 cell AMX_NATIVE_CALL BuildWeaponFlags(AMX *amx, cell *params)
 {
 	cell Index = params[1];
@@ -314,7 +229,7 @@ cell AMX_NATIVE_CALL BuildWeaponAttack2(AMX *amx, cell *params)
 			Weapon->A2V->WA2_ZOOM_MODE = *MF_GetAmxAddr(amx, params[3]);
 			break;
 		}
-	case A2_Switch:
+		case A2_Switch:
 		{
 			Weapon->A2V->WA2_SWITCH_ANIM_A = *MF_GetAmxAddr(amx, params[3]);
 			Weapon->A2V->WA2_SWITCH_ANIM_A_DURATION = amx_ctof(*MF_GetAmxAddr(amx, params[4]));
@@ -364,6 +279,7 @@ cell AMX_NATIVE_CALL BuildWeaponAttack2(AMX *amx, cell *params)
 		}
 		case A2_RadiusDamage:
 		{
+
 			break;
 		}
 		case A2_Charge:
@@ -443,7 +359,7 @@ cell AMX_NATIVE_CALL FindWeaponByName(AMX *amx, cell *params)
 {
 	char *Name = MF_GetAmxString(amx, params[1], NULL, NULL);
 
-	for (size_t Index = NULL; Index < MAX_CUSTOM_WEAPONS; Index++)
+	for (int Index = NULL; Index < WeaponCount; Index++)
 	{
 		if (!strcmp(Name, STRING(Weapons[Index].Model)))
 			return Index;
@@ -492,20 +408,12 @@ static cell AMX_NATIVE_CALL GetWeaponData(AMX *amx, cell *params)
 
 	switch (params[2])
 	{
-		case WData::IsCustom: return GET_CUSTOM_WEAPON(BaseWeapon);
-		case WData::Attack2: return GET_WEAPON_ATTACK2(BaseWeapon);
-		case WData::Burst: return GET_WEAPON_A2OFFSET(BaseWeapon);
-		case WData::CurBurst: return GET_WEAPON_CURBURST(BaseWeapon);
-		case WData::FID: return GET_WEAPON_FID(BaseWeapon);
-		case WData::Flags: return GET_WEAPON_FLAGS(BaseWeapon);
-		case WData::Icon: return GET_WEAPON_ICON(BaseWeapon);
-		case WData::InAttack2: return GET_WEAPON_INATTACK2(BaseWeapon);
-		case WData::InBurst: return GET_WEAPON_INBURST(BaseWeapon);
-		case WData::InKnifeAttack: return GET_WEAPON_A2DELAY(BaseWeapon);
-		case WData::Key: return GET_WEAPON_KEY(BaseWeapon);
-		case WData::Owner: return GET_WEAPON_OWNER(BaseWeapon);
-		case WData::LastAttackInAttack2: return GET_WEAPON_LASTATTACKINATTACK2(BaseWeapon);
-		case WData::InSwitch: return GET_WEAPON_INATTACK2(BaseWeapon);
+		case WData::IsCustom: return CUSTOM_WEAPON(BaseWeapon);
+		case WData::Attack2: return WEAPON_A2(BaseWeapon);
+		case WData::Attack2Offset: return WEAPON_A2_OFFSET(BaseWeapon);
+		case WData::InAttack2: return WEAPON_INA2(BaseWeapon);
+		case WData::InAttack2Delay: return WEAPON_INA2_DELAY(BaseWeapon);
+		case WData::Flags: return WEAPON_A2(BaseWeapon);
 	}
 
 	return NULL;
@@ -523,22 +431,16 @@ static cell AMX_NATIVE_CALL SetWeaponData(AMX *amx, cell *params)
 	if (!(BaseWeapon = (CBasePlayerWeapon *)WeaponEdict->pvPrivateData))
 		return NULL;
 
+	int Value = params[3];
+
 	switch (params[2])
 	{
-		case WData::IsCustom: GET_CUSTOM_WEAPON(BaseWeapon) = params[3]; break;
-		case WData::Attack2: GET_WEAPON_ATTACK2(BaseWeapon) = params[3]; break;
-		case WData::Burst: GET_WEAPON_A2OFFSET(BaseWeapon) = params[3]; break;
-		case WData::CurBurst: GET_WEAPON_CURBURST(BaseWeapon) = params[3]; break;
-		case WData::FID: GET_WEAPON_FID(BaseWeapon) = params[3]; break;
-		case WData::Flags: GET_WEAPON_FLAGS(BaseWeapon) = params[3]; break;
-		case WData::Icon: GET_WEAPON_ICON(BaseWeapon) = params[3]; break;
-		case WData::InAttack2: GET_WEAPON_INATTACK2(BaseWeapon) = params[3]; break;
-		case WData::InBurst: GET_WEAPON_INBURST(BaseWeapon) = params[3]; break;
-		case WData::InKnifeAttack: GET_WEAPON_A2DELAY(BaseWeapon) = params[3]; break;
-		case WData::Key: GET_WEAPON_KEY(BaseWeapon) = params[3]; break;
-		case WData::Owner: GET_WEAPON_OWNER(BaseWeapon) = params[3]; break;
-		case WData::LastAttackInAttack2: GET_WEAPON_LASTATTACKINATTACK2(BaseWeapon) = params[3]; break;
-		case WData::InSwitch: GET_WEAPON_INATTACK2(BaseWeapon) = params[3]; break;
+		//case WData::IsCustom: return CUSTOM_WEAPON(BaseWeapon) = Value; break;
+		case WData::Attack2: return WEAPON_A2(BaseWeapon) = Value; break;
+		case WData::Attack2Offset: return WEAPON_A2_OFFSET(BaseWeapon) = Value; break;
+		case WData::InAttack2: return WEAPON_INA2(BaseWeapon) = Value; break;
+		case WData::InAttack2Delay: return WEAPON_INA2_DELAY(BaseWeapon) = Value; break;
+		case WData::Flags: return WEAPON_A2(BaseWeapon) = Value; break;
 	}
 
 	return NULL;
@@ -567,7 +469,11 @@ cell AMX_NATIVE_CALL CreateProjectile(AMX *amx, cell *params)
 	PRECACHE_MODEL(Projectile.Model = STRING(ALLOC_STRING(MF_GetAmxString(amx, params[1], NULL, NULL))));
 	Projectile.Gravity = amx_ctof(params[2]);
 	Projectile.Speed = amx_ctof(params[3]);
-	Projectile.Forward_Touch = MF_RegisterSPForwardByName(amx, MF_GetAmxString(amx, params[4], NULL, NULL), FP_CELL, FP_DONE);
+	Projectile.Forward = MF_RegisterSPForwardByName(amx, MF_GetAmxString(amx, params[4], NULL, NULL), FP_CELL, FP_DONE);
+
+	if (params[0] / sizeof(cell) > 4)
+		Projectile.Duration = amx_ctof(*MF_GetAmxAddr(amx, params[5]));
+
 	Projectiles.append(Projectile);
 
 	ProjectileCount++;
@@ -575,21 +481,26 @@ cell AMX_NATIVE_CALL CreateProjectile(AMX *amx, cell *params)
 }
 
 cell ShootProjectileTimed(edict_t *LauncherEdict, int ProjectileID);
-static cell AMX_NATIVE_CALL ShootProjectile(AMX *amx, cell *params)
+static cell AMX_NATIVE_CALL _ShootProjectileTimed(AMX *amx, cell *params)
 {
 	return ShootProjectileTimed(EDICT_FOR_NUM(params[1]), params[2]);
 }
 
-static cell AMX_NATIVE_CALL Player_GiveAmmo(AMX *amx, cell *params)
+cell ShootProjectileContact(edict_t *LauncherEdict, int ProjectileID);
+static cell AMX_NATIVE_CALL _ShootProjectileContact(AMX *amx, cell *params)
 {
-	int PlayerID = params[1];
-	edict_t *PlayerEdict = EDICT_FOR_NUM(PlayerID);
+	return ShootProjectileContact(EDICT_FOR_NUM(params[1]), params[2]);
+}
 
-	if (!PlayerEdict || IS_USER_DEAD(PlayerEdict))
+int Player_GiveAmmoByID(CBasePlayer *BasePlayer, int AmmoID, int Amount);
+static cell AMX_NATIVE_CALL GiveAmmo(AMX *amx, cell *params)
+{
+	edict_t *PlayerEdict = EDICT_FOR_NUM(params[1]);
+
+	if (InvalidEntity(PlayerEdict), IS_USER_DEAD(PlayerEdict))
 		return NULL;
 
-	//int AmmoID = params[2];
-	//GiveAmmo2(PlayerEdict, (CBasePlayer *)PlayerEdict->pvPrivateData, AmmoID);
+	Player_GiveAmmoByID((CBasePlayer *)PlayerEdict->pvPrivateData, params[2], params[3]);
 	return NULL;
 }
 
@@ -660,6 +571,7 @@ cell AMX_NATIVE_CALL GetWeaponFlags(AMX *amx, cell *params)
 	return Weapons[Index].Flags;
 }
 
+void PlayerKnockback(edict_t *VictimEdict, Vector Origin, float Knockback);
 static cell AMX_NATIVE_CALL RadiusDamage2(AMX *amx, cell *params)
 {
 	cell *VectorPtr = MF_GetAmxAddr(amx, params[1]);
@@ -695,14 +607,26 @@ static cell AMX_NATIVE_CALL RadiusDamage2(AMX *amx, cell *params)
 	MESSAGE_END();
 
 	edict_t *TargetEdict = SVGame_Edicts;
-	edict_t *Projectile = EDICT_FOR_NUM(params[4]);
-	edict_t *Owner = Projectile->v.owner;
+	edict_t *ProjectileEdict = EDICT_FOR_NUM(params[4]);
+	edict_t *OwnerEdict = ProjectileEdict->v.owner;
 	float Radius = amx_ctof(params[2]);
-	entvars_t *AttackerEntVars = FNullEnt(Projectile->v.owner) ? &Projectile->v : &Projectile->v.owner->v;
-	int CastTeam = AttackerEntVars->team;
+	entvars_t *AttackerEntVars;
+	int CastTeam;
+
+	if (InvalidEntity(OwnerEdict))
+	{
+		AttackerEntVars = &ProjectileEdict->v;
+		CastTeam = AttackerEntVars->team;
+	}
+	else
+	{
+		AttackerEntVars = &OwnerEdict->v;
+		CastTeam = *((int *)OwnerEdict->pvPrivateData + 114);
+	}
+	
 	float Damage = amx_ctof(params[3]);
 	CBaseEntity *BaseEntity;
-	BOOL Penetrate = params[5];
+	int Flags = params[5];
 	TraceResult TR;
 	
 	while ((TargetEdict = FIND_ENTITY_IN_SPHERE(TargetEdict, Origin, Radius)) != SVGame_Edicts)
@@ -713,7 +637,7 @@ static cell AMX_NATIVE_CALL RadiusDamage2(AMX *amx, cell *params)
 		if (!TargetEdict->v.takedamage)
 			continue;
 
-		if (!Penetrate)
+		if (!(Flags & PFlag::Penetration))
 		{
 			TRACE_LINE(Origin, TargetEdict->v.origin, 0, 0, &TR);
 
@@ -721,8 +645,19 @@ static cell AMX_NATIVE_CALL RadiusDamage2(AMX *amx, cell *params)
 				continue;
 		}
 
+		if ((TargetEdict == OwnerEdict) && (Flags & PFlag::NoSelfDamage))
+			continue;
+
 		BaseEntity = (CBaseEntity *)TargetEdict->pvPrivateData;
-		BaseEntity->TakeDamage(AttackerEntVars, AttackerEntVars, (TargetEdict == Owner ? 0.4 : 1.0) * ((Damage * Radius) / (TargetEdict->v.origin - Origin).Length()), DMG_SLASH/*DMG_EXPLOSION*/);
+		BaseEntity->TakeDamage(AttackerEntVars, AttackerEntVars, (TargetEdict == OwnerEdict ? 0.4 : 1.0) * ((Damage * Radius) / (TargetEdict->v.origin - Origin).Length()), DMG_SLASH/*DMG_EXPLOSION*/);
+		
+		if ((Flags & PFlag::Knockback) && BaseEntity->IsPlayer())
+		{
+			if (!MP_FriendlyFire && (CastTeam == *((int *)BaseEntity + 114)))
+				continue;
+
+			PlayerKnockback(TargetEdict, Origin, RANDOM_FLOAT(120.f, 150.f));
+		}
 	}
 
 	return NULL;
@@ -909,15 +844,14 @@ int LookupActivity(CBasePlayer *BasePlayer, int activity)
 	return ::LookupActivity(pmodel, BasePlayer->pev, activity);
 }
 
-void SetAnimation(edict_t *PlayerEdict, int Animation, Activity IActivity, float FrameRate=1.0)
+void SetAnimation(edict_t *PlayerEdict, int Animation, Activity IActivity, float FrameRate)
 {
 	entvars_t *PlayerEntVars = &PlayerEdict->v;
 	CBasePlayer *BasePlayer = (CBasePlayer *)PlayerEdict->pvPrivateData;
-	
+
 	if (IActivity == ACT_SWIM || IActivity == ACT_LEAP || IActivity == ACT_HOVER)
 		return;
 
-	// WHAT DOES THIS THING DO ? [ BLOCKS ANIMATION PREVENTION ON RUNNING ]
 	BasePlayer->m_flLastFired = gpGlobals->time;
 
 	PlayerEntVars->frame = 0.f;
@@ -939,7 +873,7 @@ void SetAnimation(edict_t *PlayerEdict, int Animation, Activity IActivity, float
 static cell AMX_NATIVE_CALL _SetAnimation(AMX *amx, cell *params)
 {
 	edict_t *PlayerEdict = EDICT_FOR_NUM(params[1]);
-	
+
 	if (!PlayerEdict->pvPrivateData)
 		return NULL;
 
@@ -963,10 +897,8 @@ AMX_NATIVE_INFO AMXX_NATIVES[] =
 	{ "BuildWeaponReload", BuildWeaponReload },
 	{ "BuildWeaponReload2", BuildWeaponReload2 },
 	{ "BuildWeaponFlags", BuildWeaponFlags },
-	{ "BuildWeaponTraceAttack", BuildWeaponTraceAttack },
-	{ "BuildWeaponIcon", BuildWeaponIcon },
 	{ "BuildWeaponAttack2", BuildWeaponAttack2 },
-	{ "BuildWeaponMaxSPeed", BuildWeaponMaxSpeed },
+	{ "BuildWeaponMaxSpeed", BuildWeaponMaxSpeed },
 	{ "RegisterWeaponForward", RegisterWeaponForward },
 	{ "PrecacheWeaponModel", PrecacheWeaponModel },
 	{ "PrecacheWeaponSound", PrecacheWeaponSound },
@@ -978,8 +910,9 @@ AMX_NATIVE_INFO AMXX_NATIVES[] =
 	{ "SetWeaponData", SetWeaponData },
 	{ "SendWeaponAnim", SendWeaponAnim },
 	{ "CreateProjectile", CreateProjectile },
-	{ "ShootProjectile", ShootProjectile },
-	{ "Player_GiveAmmo", Player_GiveAmmo },
+	{ "ShootProjectileTimed", _ShootProjectileTimed },
+	{ "ShootProjectileContact", _ShootProjectileContact },
+	{ "GiveAmmo", GiveAmmo },
 	{ "SetAmmoName", SetAmmoName },
 	{ "FindAmmoByName", FindAmmoByName },
 	{ "GetWeaponCount", GetWeaponCount },
@@ -1003,3 +936,4 @@ void OnAmxxAttach(void)
 {
 	MF_AddNatives(AMXX_NATIVES);
 }
+

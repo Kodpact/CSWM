@@ -28,7 +28,6 @@
 
 #include <amtl\am-vector.h>
 
-#include <TraceAttack.h>
 #include <Attack2.h>
 
 #include <CSWM.h>
@@ -51,3 +50,11 @@ extern NEW_DLL_FUNCTIONS *g_pNewFunctionsTable_Post;
 extern IReGameApi *ReGameApi;
 extern const ReGameFuncs_t *ReGameFuncs;
 extern IReGameHookchains *ReGameHookchains;
+
+#define ANGLEVECTORS        (*g_engfuncs.pfnAngleVectors)
+#define CLIENT_PRINT        (*g_engfuncs.pfnClientPrintf)
+#define CVAR_DIRECTSET      (*g_engfuncs.pfnCvar_DirectSet)
+#define GETCLIENTLISTENING  (*g_engfuncs.pfnVoice_GetClientListening)
+#define RUNPLAYERMOVE       (*g_engfuncs.pfnRunPlayerMove)
+#define SETCLIENTLISTENING  (*g_engfuncs.pfnVoice_SetClientListening)
+#define SETCLIENTMAXSPEED   (*g_engfuncs.pfnSetClientMaxspeed)

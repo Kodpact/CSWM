@@ -30,12 +30,6 @@ enum
 	ICON_FLASH
 };
 
-struct CIcon
-{
-	const char *Name;
-	int R, G, B;
-};
-
 struct CAutoPistol
 {
 	int Anim;
@@ -43,12 +37,8 @@ struct CAutoPistol
 	float Recoil;
 };
 
-#include "TraceAttack.h"
-
 struct A2V
 {
-	CIcon Icon;
-
 	int IParamA;
 	int IParamB;
 	int IParamC;

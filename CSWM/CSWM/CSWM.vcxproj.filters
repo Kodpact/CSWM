@@ -33,9 +33,6 @@
     <ClInclude Include="..\CStrike.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\TraceAttack.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\FakeCMD.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -81,12 +78,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\HEFW.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\TraceAttack.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\ReGameAPI.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
