@@ -18,5 +18,5 @@ Just download & open solution file (sln). It's recommended to use VS 2013 for co
 <br><br><br><br>
 
 # Known Issues
-- Crosshair Now Working Properly.
+- Crosshair isn't working properly.
 <br><br><br><br>
