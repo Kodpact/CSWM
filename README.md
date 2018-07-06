@@ -2,7 +2,7 @@
 ![Opened Issues](http://isitmaintained.com/badge/open/beqaGurgenidze/CSWM.svg)
 ![Closed Issues](http://isitmaintained.com/badge/closed/beqaGurgenidze/CSWM.svg)
 
-Counter-Strike Weapon Mod (:gun:).
+Counter-Strike Weapon Mod :gun:
 
 <br><br>
 
