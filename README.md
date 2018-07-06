@@ -1,6 +1,5 @@
 # [CSWM](https://forums.alliedmods.net/showthread.php?t=308229)
-![Opened Issues](http://isitmaintained.com/badge/open/beqaGurgenidze/CSWM.svg)
-![Closed Issues](http://isitmaintained.com/badge/closed/beqaGurgenidze/CSWM.svg)
+[![Percentage of issues still open](http://isitmaintained.com/badge/open/beqagurgenidze/cswm.svg)](http://isitmaintained.com/project/beqagurgenidze/cswm "Percentage of issues still open")
 
 Counter-Strike Weapon Mod :gun:
 
