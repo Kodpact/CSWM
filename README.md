@@ -7,9 +7,7 @@ Counter-Strike Weapon Mod (:gun:).
 <br><br>
 
 - Up to ∞ Weapons.
-
-- Up to 17 New Ammoes.
-
+- Up to 17 New Ammo Types.
 - Custom Attack2 Modes.
 
 # [Wiki](https://github.com/BeqaGurgenidze/CSWM/wiki)
