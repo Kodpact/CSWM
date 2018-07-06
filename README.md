@@ -12,14 +12,13 @@ Counter-Strike Weapon Mod (:gun:).
 
 - Custom Attack2 Modes.
 
-> # [Wiki](https://github.com/BeqaGurgenidze/CSWM/wiki)
+# [Wiki](https://github.com/BeqaGurgenidze/CSWM/wiki)
 <br>
 
 ># Building CSWM
 Just download & open solution file (sln). It's recommended to use VS 2013 for compilation.
 <br><br><br><br>
 
-># Known Issues
-- Theres No Smoke Puff At Hit Origin.
-- Crosshair Now Working Properly (This one can not be fixed).
+# Known Issues
+- Crosshair Now Working Properly.
 <br><br><br><br>
