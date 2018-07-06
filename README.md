@@ -15,7 +15,7 @@ Counter-Strike Weapon Mod (:gun:).
 # [Wiki](https://github.com/BeqaGurgenidze/CSWM/wiki)
 <br>
 
-># Building CSWM
+# Building CSWM
 Just download & open solution file (sln). It's recommended to use VS 2013 for compilation.
 <br><br><br><br>
 
