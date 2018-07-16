@@ -1,5 +1,4 @@
 # [CSWM](https://forums.alliedmods.net/showthread.php?t=308229)
-[![Percentage of issues still open](http://isitmaintained.com/badge/open/beqagurgenidze/cswm.svg)](http://isitmaintained.com/project/beqagurgenidze/cswm "Percentage of issues still open")
 
 Counter-Strike Weapon Mod :gun:
 
