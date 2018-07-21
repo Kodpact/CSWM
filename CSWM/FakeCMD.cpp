@@ -27,7 +27,7 @@ int	Cmd_Argc(void)
 	RETURN_META_VALUE(MRES_IGNORED, 0);
 }
 
-void UTIL_FakeClientCommand(edict_t *pEdict, const char *Command, const char *Arg1, const char *Arg2)
+void UTIL_FakeClientCommand(edict_t *pedict, const char *Command, const char *Arg1, const char *Arg2)
 {
 	if (!Command)
 		return;
@@ -59,6 +59,6 @@ void UTIL_FakeClientCommand(edict_t *pEdict, const char *Command, const char *Ar
 	}
 
 	gFakeCMD.Fake = true;
-	MDLL_ClientCommand(pEdict);
+	MDLL_ClientCommand(pedict);
 	gFakeCMD.Fake = false;
 }

@@ -2,8 +2,8 @@
 
 // Module info
 #define MODULE_NAME "CSWM"
-#define MODULE_VERSION "1.5"
-#define MODULE_VERSION_FLOAT 1.5f
+#define MODULE_VERSION "1.6"
+#define MODULE_VERSION_FLOAT 1.6f
 #define MODULE_AUTHOR "Ghost"
 #define MODULE_URL "https://forums.alliedmods.net/showthread.php?t=308229"
 #define MODULE_LOGTAG "CSWM"
@@ -221,7 +221,7 @@
 // #define FN_DropToFloor						DropToFloor
 // #define FN_WalkMove							WalkMove
 // #define FN_SetOrigin							SetOrigin
-#define FN_EmitSound							EmitSound
+// #define FN_EmitSound							EmitSound
 // #define FN_EmitAmbientSound					EmitAmbientSound
 // #define FN_TraceLine							TraceLine
 // #define FN_TraceToss							TraceToss
@@ -315,7 +315,7 @@
 // #define FN_SetPhysicsKeyValue				SetPhysicsKeyValue
 // #define FN_GetPhysicsInfoString				GetPhysicsInfoString
 // #define FN_PrecacheEvent						PrecacheEvent
-#define FN_PlaybackEvent						PlaybackEvent
+// #define FN_PlaybackEvent						PlaybackEvent
 // #define FN_SetFatPVS							SetFatPVS
 // #define FN_SetFatPAS							SetFatPAS
 // #define FN_CheckVisibility					CheckVisibility

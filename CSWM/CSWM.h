@@ -1,6 +1,6 @@
 #pragma once
 
-#pragma warning (disable: 4127)
+#include "List.h"
 
 #define CUSTOM_WEAPON(BaseWeapon) BaseWeapon->ammo_338mag
 #define WEAPON_FID(BaseWeapon) BaseWeapon->ammo_57mm
@@ -18,13 +18,38 @@
 #define WEAPON_KEY_EX(BaseWeaponEnt) BaseWeaponEnt->v.iuser3
 #define WEAPON_CLIP(BaseWeapon) BaseWeapon->m_iClip
 
-#define PROJECTILE_TYPE(BaseEntity) BaseEntity->pev->colormap
+#define PROJECTILE_TYPE(BaseEntity) BaseEntity->ammo_338mag
 #define PROJECTILE_FORWARD(BaseWeaponEnt) BaseEntity->maxammo_338mag
+#define EFFECT_TYPE(BaseEntity) BaseEntity->ammo_338mag
+#define EFFECT_FORWARD(BaseWeaponEnt) BaseEntity->maxammo_338mag
+#define EFFECT_EXPIRE_TIME(BaseEntity) BaseEntity->pev->fuser4
+#define EFFECT_MAX_FRAMES(BaseEntity) BaseEntity->pev->fuser3
+#define EFFECT_LAST_TIME(BaseEntity) BaseEntity->pev->fuser2
+
+enum WDetectAnim
+{
+	DETECT_DRAW,
+	DETECT_SHOOT,
+	DETECT_RELOAD,
+};
+
+enum WBuildModel
+{
+	VModel,
+	PModel,
+	WModel,
+	GModel,
+};
 
 enum PType
 {
-	LIMITED_TOUCH = 1,
-	LIMITED_TIME,
+	PLIMITED_TOUCH = 1,
+	PLIMITED_TIME,
+};
+
+enum EType
+{
+	ELIMITED_TIME = 1,
 };
 
 enum WType
@@ -67,51 +92,49 @@ enum WShotgunReloadType
 
 enum WData
 {
-	IsCustom,
-	Attack2,
-	Attack2Offset,
-	InAttack2,
-	InAttack2Delay,
-	Flags,
+	WData_IsCustom,
+	WData_Attack2,
+	WData_Attack2Offset,
+	WData_InAttack2,
+	WData_InAttack2Delay,
+	WData_Flags,
+	WData_Key,
 };
 
 enum WLimit
 {
 	MAX_WEAPON_TYPES = 4,
+	MAX_HOOKS = 12,
 	MAX_WEAPON_FORWARDS = 13,
-	MAX_MODEL_NAME = 16,
-	MAX_SODUN_NAME = MAX_MODEL_NAME + 14,
+	MAX_MODEL_NAME = 24,
 	MAX_MODEL_PATH_NAME = 64
 };
 
 struct CWeapon
 {
-public:
 	string_t VModel, PModel;
-	const char *Model, *Name, *FireSound, *WModel;
+	const char *Model, *Name, *FireSound, *WModel, *GModel;
 	WType Type;
 	int ID;
 	int AnimD;
-	float AnimD_Duration;
-	int AnimS[3];
-	float AnimS_Duration;
+	CList<int> AnimS;
 	int AnimR;
-	float AnimR_Duration;
+
 	int Clip;
 	int AmmoID;
 
+	float Deploy;
+	float Reload;
 	float Delay;
 	float Damage;
 	float Recoil;
 
 	int Flags;
-
 	int A2I;
 	A2V *A2V;
-
 	float Speed;
-
 	cell Forwards[MAX_WEAPON_FORWARDS];
+	CList<float> DurationList;
 };
 
 struct CAmmo
@@ -131,6 +154,28 @@ struct CProjectile
 	cell Forward;
 };
 
+struct CEffect
+{
+	const char *Model;
+	string_t ModelIndex;
+	float Speed;
+	float Duration;
+	cell Forward;
+};
+
+struct CCleaveDamageInfo
+{
+	Vector Origin;
+	Vector VAngles;
+	float FOV;
+	BOOL Accurate;
+	float Damage;
+	float Radius;
+	entvars_t *Inflictor;
+	entvars_t *Attacker;
+	int DamageType;
+};
+
 enum WZoom
 {
 	CS_SECOND_AWP_ZOOM = 10,
@@ -144,8 +189,8 @@ enum WZoom
 #define IS_USER_DEAD(x) (x->v.deadflag != DEAD_NO) || (x->v.health < 1)
 
 extern edict_t *SVGame_Edicts;
-#define NUM_FOR_EDICT(x) ((int)((edict_t *)(x) - SVGame_Edicts))
-#define EDICT_FOR_NUM(x) (SVGame_Edicts + x)
+#define NUM_FOR_EDICT(Edict) (int)(Edict - SVGame_Edicts)
+#define EDICT_FOR_NUM(Edict) (SVGame_Edicts + Edict)
 
 #define BIT(x) (1 << x)
 
@@ -159,6 +204,7 @@ enum WFlag
 	CustomPrimaryAttack = BIT(5),
 	AutoSniper = BIT(6),
 	CustomIdleAnim = BIT(7),
+	SoloClip = BIT(8),
 
 	SwitchMode_BarTime = BIT(10),
 	SwitchMode_NoText = BIT(11),
@@ -168,7 +214,7 @@ enum WFlag
 	KnifeAttack_Knockback = BIT(13),
 };
 
-enum PFlag
+enum RDFlag
 {
 	Penetration = BIT(0),
 	NoSelfDamage = BIT(1),
@@ -188,18 +234,51 @@ enum WAnimXM1014
 
 inline BOOL InvalidEntity(edict_t *Edict)
 {
-	if (FNullEnt(Edict) || !Edict->pvPrivateData)
+	if (!Edict || !Edict->pvPrivateData)
 		return TRUE;
 
 	return FALSE;
 }
 
-inline BOOL InvalidEntity(entvars_t *EntVars)
+inline int GetEntityTeam(void *PrivateData)
 {
-	if (!EntVars || InvalidEntity(ENT(EntVars)))
-		return TRUE;
+	return *((int *)PrivateData + 114);
+}
 
-	return FALSE;
+inline int GetEntityTeam(edict_t *Edict)
+{
+	return GetEntityTeam(Edict->pvPrivateData);
+}
+
+inline REAL CellToFloat(cell Value)
+{
+	return *(REAL *)&Value;
+}
+
+inline cell FloatToCell(REAL Value)
+{
+	return *(cell *)&Value;
+}
+
+inline void VectorSub(Vector &InA, Vector &InB, Vector &Out)
+{
+	Out.x = InA.x - InB.x;
+	Out.y = InA.y - InB.y;
+	Out.z = InA.z - InB.z;
+}
+
+inline void VectorMulScalar(Vector &InA, float Scale, Vector &Out)
+{
+	Out.x = InA.x * Scale;
+	Out.y = InA.y * Scale;
+	Out.z = InA.z * Scale;
+}
+
+inline void VectorSum(Vector &InA, Vector &InB, Vector &Out)
+{
+	Out.x = InA.x + InB.x;
+	Out.y = InA.y + InB.y;
+	Out.z = InA.z + InB.z;
 }
 
 void GiveWeaponByName(edict_t *PlayerEdict, const char *Name);

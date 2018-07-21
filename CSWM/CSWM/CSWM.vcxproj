@@ -29,7 +29,7 @@
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v120</PlatformToolset>
     <CharacterSet>NotSet</CharacterSet>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
@@ -92,11 +92,10 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Custom</Optimization>
-      <SDLCheck>false</SDLCheck>
       <PreprocessorDefinitions>CSWM_EXPORTS;HAVE_STDINT_H;NDEBUG;_NDEBUG;_CRT_SECURE_NO_WARNINGS;__METAMOD_BUILD__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(IncludePath)</AdditionalIncludeDirectories>
       <ShowIncludes>false</ShowIncludes>
-      <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <FloatingPointModel>Fast</FloatingPointModel>
@@ -159,17 +158,12 @@
     <ClInclude Include="..\..\SDK\182\amxxmodule.h" />
     <ClInclude Include="..\18X\Config.h" />
     <ClInclude Include="..\Attack2.h" />
-    <ClInclude Include="..\CONST.h" />
-    <ClInclude Include="..\CPlayer.h" />
     <ClInclude Include="..\CStrike.h" />
-    <ClInclude Include="..\CstrikeUtils.h" />
     <ClInclude Include="..\CSWM.h" />
     <ClInclude Include="..\FakeCMD.h" />
     <ClInclude Include="..\HEFW.h" />
-    <ClInclude Include="..\HLSDK.h" />
+    <ClInclude Include="..\List.h" />
     <ClInclude Include="..\Module.h" />
-    <ClInclude Include="..\PData.h" />
-    <ClInclude Include="..\PlatFormHelper.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\SDK\182\AMXX182.cpp" />

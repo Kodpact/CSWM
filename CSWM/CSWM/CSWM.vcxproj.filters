@@ -36,31 +36,16 @@
     <ClInclude Include="..\FakeCMD.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\CONST.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\HLSDK.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\CPlayer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\PData.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\CstrikeUtils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\Module.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\CSWM.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\PlatFormHelper.h">
+    <ClInclude Include="..\HEFW.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\HEFW.h">
+    <ClInclude Include="..\List.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
