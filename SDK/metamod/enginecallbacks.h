@@ -55,7 +55,7 @@
 #  define enginefuncs_t HL_enginefuncs_t
 #endif /* METAMOD_CORE */
 
-#include "enginecallbacks.h"
+#include <enginecallback.h>		// ALERT, etc
 
 #ifdef __METAMOD_BUILD__
 #  undef enginefuncs_t

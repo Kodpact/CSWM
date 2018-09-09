@@ -9,10 +9,6 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
     <Filter Include="18X">
       <UniqueIdentifier>{3d12a34e-4dfb-475b-8d60-27cfdf038784}</UniqueIdentifier>
     </Filter>
@@ -27,25 +23,13 @@
     <ClInclude Include="..\..\SDK\182\amxxmodule.h">
       <Filter>18X\AMXX</Filter>
     </ClInclude>
-    <ClInclude Include="..\Attack2.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\CStrike.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\FakeCMD.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\Module.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\CSWM.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\HEFW.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\List.h">
+    <ClInclude Include="..\Attack2.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

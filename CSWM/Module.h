@@ -25,14 +25,13 @@
 #include <dlls\weapons.h>
 #include <engine\maintypes.h>
 #include <engine\studio.h>
-#include <public\amtl\am-string.h>
-#include <sm_stringhashmap.h>
 
 #include <Attack2.h>
 #include <CSWM.h>
 #include <CStrike.h>
 #include <HEFW.h>
 #include <FakeCMD.h>
+#include <HashMap.h>
 
 extern enginefuncs_t g_engfuncs;
 extern globalvars_t  *gpGlobals;

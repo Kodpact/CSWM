@@ -37,7 +37,8 @@
 // Wrap util.h from SDK with ifndef/endif, to avoid problems from multiple
 // inclusions.  Dunno why Valve didn't do that in util.h themselves..
 
-#ifdef SDK_UTIL_H
+#ifndef SDK_UTIL_H
+#define SDK_UTIL_H
 
 // We're not including the DBG_EntOfVars and DBG_AssertFunction routines
 // mentioned in the SDK util.h, so we're going to unset DEBUG here so that
@@ -46,8 +47,8 @@
 #undef DEBUG
 #endif /* DEBUG */
 
-#include <enginecallbacks.h>
-#include <comp_dep.h>
+#include "enginecallbacks.h"
+#include "comp_dep.h"
 #include <util.h>
 
 
@@ -67,7 +68,9 @@
 // The pfnIndexOfEdict() function takes a const edict_t pointer
 // as parameter anyway, so there is no reason why ENTINDEX()
 // shouldn't.
-#define ENTINDEX(x) ((*g_engfuncs.pfnIndexOfEdict)(x))
+inline int ENTINDEX(const edict_t *pEdict) { 
+	return((*g_engfuncs.pfnIndexOfEdict)(pEdict));
+}
 
 
 // Also, create some nice inlines for engine callback combos.

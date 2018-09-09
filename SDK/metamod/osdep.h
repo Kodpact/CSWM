@@ -80,11 +80,11 @@
 // DLL.
 #undef DLLEXPORT
 #ifdef _WIN32
-	#define DLLEXPORT	__declspec(dllexport)
+	#define DLLEXPORT	__declspec(dllexport) __attribute__ ((externally_visible))
 	// WINAPI should be provided in the windows compiler headers.
 	// It's usually defined to something like "__stdcall".
 #elif defined(linux)
-	#define DLLEXPORT	/* */
+	#define DLLEXPORT	__attribute__ ((visibility ("default"), externally_visible))
 	#define WINAPI		/* */
 #endif /* linux */
 
@@ -95,6 +95,7 @@
 //
 // AFAIK, this is os-independent, but it's included here in osdep.h where
 // DLLEXPORT is defined, for convenience.
+#define __attribute__(A)
 #define C_DLLEXPORT		extern "C" DLLEXPORT
 
 // Special version that fixes vsnprintf bugs.
@@ -213,7 +214,7 @@ mBOOL DLLINTERNAL os_safe_call(REG_CMD_FN pfn);
 	
 	#define sleep(x) Sleep(x*1000)
 
-	/* Fixed MSVC compiling, by Nikolay "The Storm" Baklicharov.
+	// Fixed MSVC compiling, by Nikolay "The Storm" Baklicharov.
 	#if defined(__GNUC__) || defined (_MSC_VER) && _MSC_VER >= 1400
 		#define snprintf	_snprintf
 		#define vsnprintf	_vsnprintf
@@ -227,7 +228,7 @@ mBOOL DLLINTERNAL os_safe_call(REG_CMD_FN pfn);
 		#define read		_read
 		#define write		_write
 		#define close		_close
-	#endif  GCC or MSVC 8.0+ */
+	#endif /* GCC or MSVC 8.0+ */
 #endif /* _WIN32 */
 
 #if !defined WIN32 && !defined _MSC_VER

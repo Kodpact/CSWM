@@ -117,7 +117,7 @@ struct CWeapon
 	WType Type;
 	int ID;
 	int AnimD;
-	CList<int> AnimS;
+	List<int> AnimS;
 	int AnimR;
 
 	int Clip;
@@ -134,7 +134,7 @@ struct CWeapon
 	A2V *A2V;
 	float Speed;
 	cell Forwards[MAX_WEAPON_FORWARDS];
-	CList<float> DurationList;
+	List<float> DurationList;
 };
 
 struct CAmmo

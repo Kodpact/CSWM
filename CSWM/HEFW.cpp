@@ -87,3 +87,4 @@ void *GetEntityFW(const char ClassName[], int Offset)
 
 	return (void *)IVTable[Offset];
 }
+

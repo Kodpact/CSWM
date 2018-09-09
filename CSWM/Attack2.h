@@ -116,9 +116,9 @@ struct A2V
 #include "CSWM.h"
 
 static void Attack2_Zoom(CBasePlayer *BasePlayer, int ZoomType);
-static void Attack2_Switch(CBasePlayer *BasePlayer, CBasePlayerWeapon *BaseWeapon, CWeapon *Weapon);
-static void Attack2_Burst(CBasePlayer *BasePlayer, CBasePlayerWeapon *BaseWeapon, CWeapon *Weapon);
-static void Attack2_MultiShot(CBasePlayerWeapon *BaseWeapon, CWeapon *Weapon);
-static void Attack2_KnifeAttack(CBasePlayer *BasePlayer, CBasePlayerWeapon *BaseWeapon, CWeapon *Weapon);
+static void Attack2_Switch(CBasePlayer *BasePlayer, CBasePlayerWeapon *BaseWeapon, CWeapon &Weapon);
+static void Attack2_Burst(CBasePlayer *BasePlayer, CBasePlayerWeapon *BaseWeapon, CWeapon &Weapon);
+static void Attack2_MultiShot(CBasePlayerWeapon *BaseWeapon, CWeapon &Weapon);
+static void Attack2_KnifeAttack(CBasePlayer *BasePlayer, CBasePlayerWeapon *BaseWeapon, CWeapon &Weapon);
 static void Attack2_KnifeAttackPerform(CBasePlayerWeapon *BaseWeapon);
-static void Attack2_InstaSwitch(edict_t *Playeredict, CBasePlayerWeapon *BaseWeapon, CWeapon *Weapon);
+static void Attack2_InstaSwitch(edict_t *Playeredict, CBasePlayerWeapon *BaseWeapon, CWeapon &Weapon);

@@ -80,7 +80,7 @@
     <OutDir>D:\CSDS\cstrike\addons\amxmodx\modules\</OutDir>
     <IntDir>D:\CSDS\cstrike\addons\amxmodx\modules\int_cswm\</IntDir>
     <TargetName>cswm_amxx</TargetName>
-    <IncludePath>..\;..\18X;..\..\SDK\;..\..\SDK\public;..\..\SDK\public\amtl;..\..\SDK\metamod;..\..\SDK\cssdk;..\..\SDK\cssdk\public;..\..\SDK\cssdk\pm_shared;..\..\SDK\cssdk\game_shared;..\..\SDK\cssdk\engine;..\..\SDK\cssdk\dlls;..\..\SDK\cssdk\common;$(IncludePath)</IncludePath>
+    <IncludePath>..\;..\18X;..\..\SDK\;..\..\SDK\public;..\..\SDK\metamod;..\..\SDK\cssdk;..\..\SDK\cssdk\public;..\..\SDK\cssdk\pm_shared;..\..\SDK\cssdk\game_shared;..\..\SDK\cssdk\engine;..\..\SDK\cssdk\dlls;..\..\SDK\cssdk\common;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>D:\CSDS\cstrike\addons\amxmodx\modules\</OutDir>
@@ -102,11 +102,16 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <WholeProgramOptimization>false</WholeProgramOptimization>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <AssemblerOutput>All</AssemblerOutput>
     </ClCompile>
     <Link>
       <LinkErrorReporting>NoErrorReport</LinkErrorReporting>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>$(OutDir)$(TargetName).pdb</ProgramDatabaseFile>
+      <AssemblyDebug>true</AssemblyDebug>
+      <GenerateMapFile>true</GenerateMapFile>
+      <MapExports>true</MapExports>
+      <GenerateWindowsMetadata>true</GenerateWindowsMetadata>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -118,13 +123,10 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
-      <SDLCheck>false</SDLCheck>
       <DebugInformationFormat>None</DebugInformationFormat>
       <ErrorReporting>None</ErrorReporting>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(IncludePath)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>CSWM_EXPORTS;__METAMOD_BUILD__;HAVE_STDINT_H;NDEBUG;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;CSWM_EXPORTS;SDK_UTIL_H;__METAMOD_BUILD__;HAVE_STDINT_H;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <WholeProgramOptimization>true</WholeProgramOptimization>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <AssemblerOutput>NoListing</AssemblerOutput>
@@ -134,7 +136,6 @@
       <SubSystem>NotSet</SubSystem>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <LinkErrorReporting>NoErrorReport</LinkErrorReporting>
-      <AssemblyDebug>false</AssemblyDebug>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -158,11 +159,7 @@
     <ClInclude Include="..\..\SDK\182\amxxmodule.h" />
     <ClInclude Include="..\18X\Config.h" />
     <ClInclude Include="..\Attack2.h" />
-    <ClInclude Include="..\CStrike.h" />
     <ClInclude Include="..\CSWM.h" />
-    <ClInclude Include="..\FakeCMD.h" />
-    <ClInclude Include="..\HEFW.h" />
-    <ClInclude Include="..\List.h" />
     <ClInclude Include="..\Module.h" />
   </ItemGroup>
   <ItemGroup>

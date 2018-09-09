@@ -2,16 +2,15 @@
 
 #define DEFINE_CHAR64(Value) char *Value = new char[64];
 
-extern CList<CWeapon> Weapons;
-extern CList<CAmmo> Ammos;
-extern CList<CProjectile> Projectiles;
-extern CList<CEffect> Effects;
-extern CList<ItemInfo> ItemInfoes;
-extern StringHashMap<int> AnimHashMap;
+extern List<CWeapon> Weapons;
+extern List<CAmmo> Ammos;
+extern List<CProjectile> Projectiles;
+extern List<CEffect> Effects;
+
+extern StringHashMap AnimHashMap;
 
 extern BOOL CanPrecache;
 extern BOOL SV_Cheats;
-extern BOOL MP_FriendlyFire;
 extern cvar_t *CVar_LogPointer;
 extern cvar_t *CVar_AMapPointer;
 extern cvar_t *CVar_AutoDetectAnimPointer;
@@ -46,26 +45,26 @@ void PrecacheModule(void)
 	MI_Ring = PRECACHE_MODEL(SPR_Ring);
 }
 
-void RecordWeaponDurationList(CWeapon *Weapon)
+void RecordWeaponDurationList(CWeapon &Weapon)
 {
 	edict_t *InfoEdict = CREATE_ENTITY();
-	SET_MODEL(InfoEdict, STRING(Weapon->VModel));
+	SET_MODEL(InfoEdict, STRING(Weapon.VModel));
 
 	studiohdr_t *Studio = (studiohdr_t *)GET_MODEL_PTR(InfoEdict);
 
 	for (int Index = 0; Index < Studio->numseq; Index++)
 	{
 		mstudioseqdesc_t *Sequence = (mstudioseqdesc_t *)((byte *)Studio + Studio->seqindex) + Index;
-		Weapon->DurationList.Append(Sequence->numframes / Sequence->fps);
+		Weapon.DurationList.Append(Sequence->numframes / Sequence->fps);
 	}
 
 	REMOVE_ENTITY(InfoEdict);
 }
 
-void DetectAnimation(CWeapon *Weapon, int Type)
+void DetectAnimation(CWeapon &Weapon, int Type)
 {
 	edict_t *InfoEdict = CREATE_ENTITY();
-	SET_MODEL(InfoEdict, STRING(Weapon->VModel));
+	SET_MODEL(InfoEdict, STRING(Weapon.VModel));
 
 	studiohdr_t *Studio = (studiohdr_t *)GET_MODEL_PTR(InfoEdict);
 
@@ -75,9 +74,9 @@ void DetectAnimation(CWeapon *Weapon, int Type)
 
 		switch (Type)
 		{
-			case 0: if (!strncmp(Sequence->label, "draw", 4)) Weapon->AnimD = Index;
-			case 1: if (!strncmp(Sequence->label, "shoot", 5)) Weapon->AnimS.Append(Index);
-			case 2: if (!strncmp(Sequence->label, "reload", 6)) Weapon->AnimR = Index;
+			case 0: if (!strncmp(Sequence->label, "draw", 4)) Weapon.AnimD = Index;
+			case 1: if (!strncmp(Sequence->label, "shoot", 5)) Weapon.AnimS.Append(Index);
+			case 2: if (!strncmp(Sequence->label, "reload", 6)) Weapon.AnimR = Index;
 		}
 	}
 
@@ -142,11 +141,11 @@ cell AMX_NATIVE_CALL BuildWeaponModels(AMX *Plugin, cell *Params)
 	if (Index < 0 || Index >= WeaponCount)
 		return NULL;
 
-	CWeapon *Weapon = &Weapons[Index];
+	CWeapon &Weapon = Weapons[Index];
 
-	PRECACHE_MODEL(STRING(Weapon->VModel = ALLOC_STRING(MF_GetAmxString(Plugin, Params[2], NULL, NULL))));
-	PRECACHE_MODEL(STRING(Weapon->PModel = ALLOC_STRING(MF_GetAmxString(Plugin, Params[3], NULL, NULL))));
-	PRECACHE_MODEL(Weapon->WModel = STRING(ALLOC_STRING(MF_GetAmxString(Plugin, Params[4], NULL, NULL))));
+	PRECACHE_MODEL(STRING(Weapon.VModel = ALLOC_STRING(MF_GetAmxString(Plugin, Params[2], NULL, NULL))));
+	PRECACHE_MODEL(STRING(Weapon.PModel = ALLOC_STRING(MF_GetAmxString(Plugin, Params[3], NULL, NULL))));
+	PRECACHE_MODEL(Weapon.WModel = STRING(ALLOC_STRING(MF_GetAmxString(Plugin, Params[4], NULL, NULL))));
 	RecordWeaponDurationList(Weapon);
 	return NULL;
 }
@@ -158,11 +157,11 @@ cell AMX_NATIVE_CALL BuildWeaponFireSound(AMX *Plugin, cell *Params)
 	if (Index < 0 || Index >= WeaponCount)
 		return NULL;
 
-	CWeapon *Weapon = &Weapons[Index];
+	CWeapon &Weapon = Weapons[Index];
 
 	char *String = MF_GetAmxString(Plugin, Params[2], NULL, NULL);
-	Weapon->FireSound = STRING(ALLOC_STRING(String));
-	PRECACHE_SOUND(Weapon->FireSound);
+	Weapon.FireSound = STRING(ALLOC_STRING(String));
+	PRECACHE_SOUND(Weapon.FireSound);
 	return NULL;
 }
 
@@ -173,11 +172,11 @@ cell AMX_NATIVE_CALL BuildWeaponList(AMX *Plugin, cell *Params)
 	if (Index < 0 || Index >= WeaponCount)
 		return NULL;
 
-	CWeapon *Weapon = &Weapons[Index];
+	CWeapon &Weapon = Weapons[Index];
 
-	Weapon->GModel = STRING(ALLOC_STRING(MF_GetAmxString(Plugin, Params[2], NULL, NULL)));
+	Weapon.GModel = STRING(ALLOC_STRING(MF_GetAmxString(Plugin, Params[2], NULL, NULL)));
 	char *Path = new char[MAX_PATH];
-	sprintf(Path, "sprites/%s.txt", Weapon->GModel);
+	sprintf(Path, "sprites/%s.txt", Weapon.GModel);
 	PRECACHE_GENERIC(STRING(ALLOC_STRING(Path)));
 	delete[] Path;
 	return NULL;
@@ -190,9 +189,9 @@ cell AMX_NATIVE_CALL BuildWeaponAmmunition(AMX *Plugin, cell *Params)
 	if (Index < 0 || Index >= WeaponCount)
 		return NULL;
 
-	CWeapon *Weapon = &Weapons[Index];
-	Weapon->Clip = Params[2];
-	Weapon->AmmoID = Params[3];
+	CWeapon &Weapon = Weapons[Index];
+	Weapon.Clip = Params[2];
+	Weapon.AmmoID = Params[3];
 	return NULL;
 }
 
@@ -203,18 +202,18 @@ cell AMX_NATIVE_CALL BuildWeaponDeploy(AMX *Plugin, cell *Params)
 	if (Index < 0 || Index >= WeaponCount)
 		return NULL;
 
-	CWeapon *Weapon = &Weapons[Index];
+	CWeapon &Weapon = Weapons[Index];
 	float Duration = CellToFloat(Params[3]);
 
 	if (Params[2])
-		Weapon->AnimD = Params[2];
+		Weapon.AnimD = Params[2];
 	else
 		DetectAnimation(Weapon, 0);
 
 	if (Duration > 0.0f)
-		Weapon->Deploy = Duration;
+		Weapon.Deploy = Duration;
 	else
-		Weapon->Deploy = Weapon->DurationList[Weapon->AnimD];
+		Weapon.Deploy = Weapon.DurationList[Weapon.AnimD];
 
 	return NULL;
 }
@@ -226,18 +225,18 @@ cell AMX_NATIVE_CALL BuildWeaponPrimaryAttack(AMX *Plugin, cell *Params)
 	if (Index < 0 || Index >= WeaponCount)
 		return NULL;
 
-	CWeapon *Weapon = &Weapons[Index];
+	CWeapon &Weapon = Weapons[Index];
 
-	Weapon->Delay = CellToFloat(Params[2]);
-	Weapon->Damage = CellToFloat(Params[3]);
-	Weapon->Recoil = CellToFloat(Params[4]);
+	Weapon.Delay = CellToFloat(Params[2]);
+	Weapon.Damage = CellToFloat(Params[3]);
+	Weapon.Recoil = CellToFloat(Params[4]);
 
 	if (Params[5])
 	{
-		Weapon->AnimS.Append(Params[5]);
-		
+		Weapon.AnimS.Append(Params[5]);
+
 		for (size_t Index = 5; Index <= Params[0] / sizeof(cell); Index++)
-			Weapon->AnimS.Append(*MF_GetAmxAddr(Plugin, Params[Index]));
+			Weapon.AnimS.Append(*MF_GetAmxAddr(Plugin, Params[Index]));
 	}
 	else
 		DetectAnimation(Weapon, WDetectAnim::DETECT_SHOOT);
@@ -252,18 +251,18 @@ cell AMX_NATIVE_CALL BuildWeaponReload(AMX *Plugin, cell *Params)
 	if (Index < 0 || Index >= WeaponCount)
 		return NULL;
 
-	CWeapon *Weapon = &Weapons[Index];
+	CWeapon &Weapon = Weapons[Index];
 	float Duration = CellToFloat(Params[3]);
 
 	if (Params[2])
-		Weapon->AnimR = Params[2];
+		Weapon.AnimR = Params[2];
 	else
 		DetectAnimation(Weapon, WDetectAnim::DETECT_RELOAD);
 
 	if (Duration > 0.0f)
-		Weapon->Reload = Duration;
+		Weapon.Reload = Duration;
 	else
-		Weapon->Reload = Weapon->DurationList[Weapon->AnimR];
+		Weapon.Reload = Weapon.DurationList[Weapon.AnimR];
 
 	return NULL;
 }
@@ -275,10 +274,10 @@ cell AMX_NATIVE_CALL BuildWeaponReload2(AMX *Plugin, cell *Params)
 	if (Index < 0 || Index >= WeaponCount)
 		return NULL;
 
-	CWeapon *Weapon = &Weapons[Index];
+	CWeapon &Weapon = Weapons[Index];
 
-	Weapon->Reload = CellToFloat(Params[2]);
-	Weapon->AnimR = Params[3];
+	Weapon.Reload = CellToFloat(Params[2]);
+	Weapon.AnimR = Params[3];
 	return NULL;
 }
 
@@ -300,63 +299,63 @@ cell AMX_NATIVE_CALL BuildWeaponSecondaryAttack(AMX *Plugin, cell *Params)
 	if (Index < 0 || Index >= WeaponCount)
 		return NULL;
 
-	CWeapon *Weapon = &Weapons[Index];
-	Weapon->A2V = new A2V;
-	//Weapon->A2V->TRV = NULL;
+	CWeapon &Weapon = Weapons[Index];
+	Weapon.A2V = new A2V();
+	//Weapon.A2V->TRV = NULL;
 
-	switch (Weapon->A2I = Params[2])
+	switch (Weapon.A2I = Params[2])
 	{
 		case A2_Zoom:
 		{
-			Weapon->A2V->WA2_ZOOM_MODE = *MF_GetAmxAddr(Plugin, Params[3]);
+			Weapon.A2V->WA2_ZOOM_MODE = *MF_GetAmxAddr(Plugin, Params[3]);
 			break;
 		}
 		case A2_Switch:
 		{
-			Weapon->A2V->WA2_SWITCH_ANIM_A = *MF_GetAmxAddr(Plugin, Params[3]);
-			Weapon->A2V->WA2_SWITCH_ANIM_A_DURATION = CellToFloat(*MF_GetAmxAddr(Plugin, Params[4]));
-			Weapon->A2V->WA2_SWITCH_ANIM_B = *MF_GetAmxAddr(Plugin, Params[5]);
-			Weapon->A2V->WA2_SWITCH_ANIM_B_DURATION = CellToFloat(*MF_GetAmxAddr(Plugin, Params[6]));
-			Weapon->A2V->WA2_SWITCH_ANIM_IDLE = *MF_GetAmxAddr(Plugin, Params[7]);
-			Weapon->A2V->WA2_SWITCH_ANIM_DRAW = *MF_GetAmxAddr(Plugin, Params[8]);
-			Weapon->A2V->WA2_SWITCH_ANIM_DRAW_DURATION = CellToFloat(*MF_GetAmxAddr(Plugin, Params[9]));
-			Weapon->A2V->WA2_SWITCH_ANIM_SHOOT = *MF_GetAmxAddr(Plugin, Params[10]);
-			Weapon->A2V->WA2_SWITCH_ANIM_SHOOT_DURATION = CellToFloat(*MF_GetAmxAddr(Plugin, Params[11]));
-			Weapon->A2V->WA2_SWITCH_ANIM_RELOAD = *MF_GetAmxAddr(Plugin, Params[12]);
-			Weapon->A2V->WA2_SWITCH_ANIM_RELOAD_DURATION = CellToFloat(*MF_GetAmxAddr(Plugin, Params[13]));
-			Weapon->A2V->WA2_SWITCH_DELAY = CellToFloat(*MF_GetAmxAddr(Plugin, Params[14]));
-			Weapon->A2V->WA2_SWITCH_DAMAGE = CellToFloat(*MF_GetAmxAddr(Plugin, Params[15]));
-			Weapon->A2V->WA2_SWITCH_RECOIL = CellToFloat(*MF_GetAmxAddr(Plugin, Params[16]));
-			PRECACHE_SOUND(Weapon->A2V->WA2_SWITCH_FSOUND = STRING(ALLOC_STRING(MF_GetAmxString(Plugin, Params[17], NULL, NULL))));
+			Weapon.A2V->WA2_SWITCH_ANIM_A = *MF_GetAmxAddr(Plugin, Params[3]);
+			Weapon.A2V->WA2_SWITCH_ANIM_A_DURATION = CellToFloat(*MF_GetAmxAddr(Plugin, Params[4]));
+			Weapon.A2V->WA2_SWITCH_ANIM_B = *MF_GetAmxAddr(Plugin, Params[5]);
+			Weapon.A2V->WA2_SWITCH_ANIM_B_DURATION = CellToFloat(*MF_GetAmxAddr(Plugin, Params[6]));
+			Weapon.A2V->WA2_SWITCH_ANIM_IDLE = *MF_GetAmxAddr(Plugin, Params[7]);
+			Weapon.A2V->WA2_SWITCH_ANIM_DRAW = *MF_GetAmxAddr(Plugin, Params[8]);
+			Weapon.A2V->WA2_SWITCH_ANIM_DRAW_DURATION = CellToFloat(*MF_GetAmxAddr(Plugin, Params[9]));
+			Weapon.A2V->WA2_SWITCH_ANIM_SHOOT = *MF_GetAmxAddr(Plugin, Params[10]);
+			Weapon.A2V->WA2_SWITCH_ANIM_SHOOT_DURATION = CellToFloat(*MF_GetAmxAddr(Plugin, Params[11]));
+			Weapon.A2V->WA2_SWITCH_ANIM_RELOAD = *MF_GetAmxAddr(Plugin, Params[12]);
+			Weapon.A2V->WA2_SWITCH_ANIM_RELOAD_DURATION = CellToFloat(*MF_GetAmxAddr(Plugin, Params[13]));
+			Weapon.A2V->WA2_SWITCH_DELAY = CellToFloat(*MF_GetAmxAddr(Plugin, Params[14]));
+			Weapon.A2V->WA2_SWITCH_DAMAGE = CellToFloat(*MF_GetAmxAddr(Plugin, Params[15]));
+			Weapon.A2V->WA2_SWITCH_RECOIL = CellToFloat(*MF_GetAmxAddr(Plugin, Params[16]));
+			PRECACHE_SOUND(Weapon.A2V->WA2_SWITCH_FSOUND = STRING(ALLOC_STRING(MF_GetAmxString(Plugin, Params[17], NULL, NULL))));
 			break;
 		}
 		case A2_Burst:
 		{
-			Weapon->A2V->WA2_BURST_VALUE = *MF_GetAmxAddr(Plugin, Params[3]);
+			Weapon.A2V->WA2_BURST_VALUE = *MF_GetAmxAddr(Plugin, Params[3]);
 			break;
 		}
 		case A2_MultiShot:
 		{
-			Weapon->A2V->WA2_MULTISHOT_VALUE = *MF_GetAmxAddr(Plugin, Params[3]);
+			Weapon.A2V->WA2_MULTISHOT_VALUE = *MF_GetAmxAddr(Plugin, Params[3]);
 			break;
 		}
 		case A2_AutoPistol:
 		{
-			Weapon->A2V->WA2_AUTOPISTOL_ANIM = *MF_GetAmxAddr(Plugin, Params[3]);
-			Weapon->A2V->WA2_AUTOPISTOL_DELAY = CellToFloat(*MF_GetAmxAddr(Plugin, Params[4]));
-			Weapon->A2V->WA2_AUTOPISTOL_RECOIL = CellToFloat(*MF_GetAmxAddr(Plugin, Params[5]));
+			Weapon.A2V->WA2_AUTOPISTOL_ANIM = *MF_GetAmxAddr(Plugin, Params[3]);
+			Weapon.A2V->WA2_AUTOPISTOL_DELAY = CellToFloat(*MF_GetAmxAddr(Plugin, Params[4]));
+			Weapon.A2V->WA2_AUTOPISTOL_RECOIL = CellToFloat(*MF_GetAmxAddr(Plugin, Params[5]));
 			break;
 		}
 		case A2_KnifeAttack:
 		{
-			Weapon->A2V->WA2_KNIFEATTACK_ANIMATION = *MF_GetAmxAddr(Plugin, Params[3]);
-			Weapon->A2V->WA2_KNIFEATTACK_DELAY = CellToFloat(*MF_GetAmxAddr(Plugin, Params[4]));
-			Weapon->A2V->WA2_KNIFEATTACK_DURATION = CellToFloat(*MF_GetAmxAddr(Plugin, Params[5]));
-			Weapon->A2V->WA2_KNIFEATTACK_RADIUS = CellToFloat(*MF_GetAmxAddr(Plugin, Params[6]));
-			Weapon->A2V->WA2_KNIFEATTACK_DAMAGE_MIN = *MF_GetAmxAddr(Plugin, Params[7]);
-			Weapon->A2V->WA2_KNIFEATTACK_DAMAGE_MAX = *MF_GetAmxAddr(Plugin, Params[8]);
-			Weapon->A2V->WA2_KNIFEATTACK_KNOCKBACK = CellToFloat(*MF_GetAmxAddr(Plugin, Params[9]));
-			PRECACHE_SOUND(Weapon->A2V->WA2_KNIFEATTACK_SOUND = STRING(ALLOC_STRING(MF_GetAmxString(Plugin, Params[10], NULL, NULL))));
+			Weapon.A2V->WA2_KNIFEATTACK_ANIMATION = *MF_GetAmxAddr(Plugin, Params[3]);
+			Weapon.A2V->WA2_KNIFEATTACK_DELAY = CellToFloat(*MF_GetAmxAddr(Plugin, Params[4]));
+			Weapon.A2V->WA2_KNIFEATTACK_DURATION = CellToFloat(*MF_GetAmxAddr(Plugin, Params[5]));
+			Weapon.A2V->WA2_KNIFEATTACK_RADIUS = CellToFloat(*MF_GetAmxAddr(Plugin, Params[6]));
+			Weapon.A2V->WA2_KNIFEATTACK_DAMAGE_MIN = *MF_GetAmxAddr(Plugin, Params[7]);
+			Weapon.A2V->WA2_KNIFEATTACK_DAMAGE_MAX = *MF_GetAmxAddr(Plugin, Params[8]);
+			Weapon.A2V->WA2_KNIFEATTACK_KNOCKBACK = CellToFloat(*MF_GetAmxAddr(Plugin, Params[9]));
+			PRECACHE_SOUND(Weapon.A2V->WA2_KNIFEATTACK_SOUND = STRING(ALLOC_STRING(MF_GetAmxString(Plugin, Params[10], NULL, NULL))));
 			break;
 		}
 		case A2_RadiusDamage:
@@ -370,12 +369,12 @@ cell AMX_NATIVE_CALL BuildWeaponSecondaryAttack(AMX *Plugin, cell *Params)
 		}
 		case A2_InstaSwitch:
 		{
-			Weapon->A2V->WA2_INSTASWITCH_ANIM_SHOOT = *MF_GetAmxAddr(Plugin, Params[3]);
-			Weapon->A2V->WA2_INSTASWITCH_DELAY = CellToFloat(*MF_GetAmxAddr(Plugin, Params[4]));
-			Weapon->A2V->WA2_INSTASWITCH_DAMAGE = CellToFloat(*MF_GetAmxAddr(Plugin, Params[5]));
-			Weapon->A2V->WA2_INSTASWITCH_RECOIL = CellToFloat(*MF_GetAmxAddr(Plugin, Params[6]));
-			Weapon->A2V->WA2_INSTASWITCH_NAME = STRING(ALLOC_STRING(MF_GetAmxString(Plugin, Params[7], NULL, NULL)));
-			Weapon->A2V->WA2_INSTASWITCH_NAME2 = STRING(ALLOC_STRING(MF_GetAmxString(Plugin, Params[8], NULL, NULL)));
+			Weapon.A2V->WA2_INSTASWITCH_ANIM_SHOOT = *MF_GetAmxAddr(Plugin, Params[3]);
+			Weapon.A2V->WA2_INSTASWITCH_DELAY = CellToFloat(*MF_GetAmxAddr(Plugin, Params[4]));
+			Weapon.A2V->WA2_INSTASWITCH_DAMAGE = CellToFloat(*MF_GetAmxAddr(Plugin, Params[5]));
+			Weapon.A2V->WA2_INSTASWITCH_RECOIL = CellToFloat(*MF_GetAmxAddr(Plugin, Params[6]));
+			Weapon.A2V->WA2_INSTASWITCH_NAME = STRING(ALLOC_STRING(MF_GetAmxString(Plugin, Params[7], NULL, NULL)));
+			Weapon.A2V->WA2_INSTASWITCH_NAME2 = STRING(ALLOC_STRING(MF_GetAmxString(Plugin, Params[8], NULL, NULL)));
 		}
 	}
 
@@ -400,15 +399,15 @@ cell AMX_NATIVE_CALL RegisterWeaponForward(AMX *Plugin, cell *Params)
 	if (Index < 0 || Index >= WeaponCount)
 		return NULL;
 
-	CWeapon *Weapon = &Weapons[Index];
+	CWeapon &Weapon = Weapons[Index];
 	char *String = MF_GetAmxString(Plugin, Params[3], NULL, NULL);
 
 	int Forward = Params[2];
 
 	if (Forward == WForward::DamagePost)
-		Weapon->Forwards[Forward] = MF_RegisterSPForwardByName(Plugin, String, FP_CELL, FP_FLOAT, FP_CELL, FP_DONE);
+		Weapon.Forwards[Forward] = MF_RegisterSPForwardByName(Plugin, String, FP_CELL, FP_FLOAT, FP_CELL, FP_DONE);
 	else
-		Weapon->Forwards[Forward] = MF_RegisterSPForwardByName(Plugin, String, FP_CELL, FP_DONE);
+		Weapon.Forwards[Forward] = MF_RegisterSPForwardByName(Plugin, String, FP_CELL, FP_DONE);
 
 	return NULL;
 }
@@ -681,9 +680,9 @@ static cell AMX_NATIVE_CALL CreateExplosion(AMX *Plugin, cell *Params)
 
 	MESSAGE_BEGIN(MSG_BROADCAST, SVC_TEMPENTITY);
 	WRITE_BYTE(TE_EXPLOSION);
-	WRITE_COORD(Origin[0]);
-	WRITE_COORD(Origin[1]);
-	WRITE_COORD(Origin[2] + 40.0f);
+	WRITE_COORD(Origin.x);
+	WRITE_COORD(Origin.y);
+	WRITE_COORD(Origin.z + 40.0f);
 	WRITE_SHORT(MI_Explosion);
 	WRITE_BYTE(25);
 	WRITE_BYTE(25);
@@ -692,17 +691,17 @@ static cell AMX_NATIVE_CALL CreateExplosion(AMX *Plugin, cell *Params)
 
 	MESSAGE_BEGIN(MSG_BROADCAST, SVC_TEMPENTITY);
 	WRITE_BYTE(TE_WORLDDECAL);
-	WRITE_COORD(Origin[0]);
-	WRITE_COORD(Origin[1]);
-	WRITE_COORD(Origin[2]);
+	WRITE_COORD(Origin.x);
+	WRITE_COORD(Origin.y);
+	WRITE_COORD(Origin.z);
 	WRITE_BYTE(RANDOM_LONG(46, 48));
 	MESSAGE_END();
 
 	MESSAGE_BEGIN(MSG_BROADCAST, SVC_TEMPENTITY);
 	WRITE_BYTE(TE_SMOKE);
-	WRITE_COORD(Origin[0]);
-	WRITE_COORD(Origin[1]);
-	WRITE_COORD(Origin[2]);
+	WRITE_COORD(Origin.x);
+	WRITE_COORD(Origin.y);
+	WRITE_COORD(Origin.z);
 	WRITE_SHORT(MI_Smoke);
 	WRITE_BYTE(30);
 	WRITE_BYTE(10);
@@ -710,7 +709,7 @@ static cell AMX_NATIVE_CALL CreateExplosion(AMX *Plugin, cell *Params)
 	return NULL;
 }
 
-void PlayerKnockback(edict_t *VictimEdict, Vector Origin, float Knockback);
+void PlayerKnockback(edict_t *VictimEdict, Vector &Origin, float Knockback);
 static cell AMX_NATIVE_CALL RadiusDamage2(AMX *Plugin, cell *Params)
 {
 	Vector Origin = GetVectorFromAddress(MF_GetAmxAddr(Plugin, Params[1]));
@@ -743,7 +742,8 @@ static cell AMX_NATIVE_CALL RadiusDamage2(AMX *Plugin, cell *Params)
 	float Radius = CellToFloat(Params[3]);
 	float Damage = CellToFloat(Params[4]);
 	int Flags = Params[5];
-	
+	BOOL Result;
+
 	while ((TargetEdict = FIND_ENTITY_IN_SPHERE(TargetEdict, Origin, Radius)) != SVGame_Edicts)
 	{
 		if (!TargetEdict->pvPrivateData)
@@ -770,22 +770,17 @@ static cell AMX_NATIVE_CALL RadiusDamage2(AMX *Plugin, cell *Params)
 		if ((TargetEdict == OwnerEdict) && (Flags & RDFlag::NoSelfDamage))
 			continue;
 
-		BaseEntity->TakeDamage(InflictorVars, AttackerVars, (TargetEdict == OwnerEdict ? 0.4 : 1.0) * ((Damage * Radius) / (TargetOrigin - Origin).Length()), DMG_EXPLOSION);
-
-		if ((Flags & RDFlag::Knockback) && BaseEntity->IsPlayer())
-		{
-			if (!MP_FriendlyFire && (CastTeam == GetEntityTeam(BaseEntity)))
-				continue;
-
+		Result = BaseEntity->TakeDamage(InflictorVars, AttackerVars, (TargetEdict == OwnerEdict ? 0.4 : 1.0) * ((Damage * Radius) / (TargetOrigin - Origin).Length()), DMG_EXPLOSION);
+		
+		if (Result & (Flags & RDFlag::Knockback) && BaseEntity->IsPlayer())
 			PlayerKnockback(TargetEdict, Origin, RANDOM_FLOAT(120.0f, 150.0f));
-		}
 	}
-
+	
 	return NULL;
 }
 
-BOOL InViewCone(edict_t *PlayerEdict, Vector Origin, BOOL Accurate);
-BOOL InViewCone(Vector &SelfOrigin, Vector &VAngles, float FOV, Vector Origin, BOOL Accurate);
+BOOL InViewCone(edict_t *PlayerEdict, Vector &Origin, BOOL Accurate);
+BOOL InViewCone(Vector &SelfOrigin, Vector &VAngles, float FOV, Vector &Origin, BOOL Accurate);
 void PerformCleaveDamage()
 {
 	edict_t *TargetEdict = SVGame_Edicts;
@@ -809,7 +804,7 @@ void PerformCleaveDamage()
 		if (!InViewCone(CleaveDamageInfo.Origin, CleaveDamageInfo.VAngles, CleaveDamageInfo.FOV, TargetOrigin, CleaveDamageInfo.Accurate))
 			continue;
 
-		BaseEntity->TakeDamage(CleaveDamageInfo.Inflictor, CleaveDamageInfo.Attacker, ((CleaveDamageInfo.Damage *CleaveDamageInfo.Radius) / (TargetOrigin - CleaveDamageInfo.Origin).Length()), DMG_SLASH);
+		BaseEntity->TakeDamage(CleaveDamageInfo.Inflictor, CleaveDamageInfo.Attacker, ((CleaveDamageInfo.Damage *CleaveDamageInfo.Radius) / (TargetOrigin - CleaveDamageInfo.Origin).Length()), CleaveDamageInfo.DamageType);
 	}
 }
 
@@ -955,7 +950,7 @@ static void GetSequenceInfo(void *Model, entvars_t *EntVars, float *flFrameRate,
 	}
 
 	*flFrameRate = SequenceDesc->fps * 256.0f / (SequenceDesc->numframes - 1);
-	*flGroundSpeed = Q_sqrt(SequenceDesc->linearmovement[0] * SequenceDesc->linearmovement[0] + SequenceDesc->linearmovement[1] * SequenceDesc->linearmovement[1] + SequenceDesc->linearmovement[2] * SequenceDesc->linearmovement[2]);
+	*flGroundSpeed = SequenceDesc->linearmovement.Length();
 	*flGroundSpeed = *flGroundSpeed * SequenceDesc->fps / (SequenceDesc->numframes - 1);
 }
 
@@ -1030,15 +1025,15 @@ cell AMX_NATIVE_CALL BuildWeaponModel(AMX *Plugin, cell *Params)
 	if (Index < 0 || Index >= WeaponCount)
 		return NULL;
 
-	CWeapon *Weapon = &Weapons[Index];
+	CWeapon &Weapon = Weapons[Index];
 	const char *Model = MF_GetAmxString(Plugin, Params[3], NULL, nullptr);
 
 	switch (Params[2])
 	{
-		case VModel: PRECACHE_MODEL(STRING(Weapon->VModel = ALLOC_STRING(Model))); break;
-		case PModel: PRECACHE_MODEL(STRING(Weapon->PModel = ALLOC_STRING(Model))); break;
-		case WModel: PRECACHE_MODEL(Weapon->WModel = STRING(ALLOC_STRING(Model))); break;
-		case GModel: PRECACHE_MODEL(Weapon->GModel = STRING(ALLOC_STRING(Model))); break;
+		case WBuildModel::VModel: PRECACHE_MODEL(STRING(Weapon.VModel = ALLOC_STRING(Model))); break;
+		case WBuildModel::PModel: PRECACHE_MODEL(STRING(Weapon.PModel = ALLOC_STRING(Model))); break;
+		case WBuildModel::WModel: PRECACHE_MODEL(Weapon.WModel = STRING(ALLOC_STRING(Model))); break;
+		case WBuildModel::GModel: PRECACHE_MODEL(Weapon.GModel = STRING(ALLOC_STRING(Model))); break;
 	}
 
 	return NULL;
@@ -1051,15 +1046,15 @@ cell AMX_NATIVE_CALL BuildWeaponModel2(AMX *Plugin, cell *Params)
 	if (Index < 0 || Index >= WeaponCount)
 		return NULL;
 
-	CWeapon *Weapon = &Weapons[Index];
+	CWeapon &Weapon = Weapons[Index];
 	string_t Model = Params[3];
 
 	switch (Params[2])
 	{
-		case VModel: PRECACHE_MODEL(STRING(Weapon->VModel = Model)); break;
-		case PModel: PRECACHE_MODEL(STRING(Weapon->PModel = Model)); break;
-		case WModel: PRECACHE_MODEL(Weapon->WModel = STRING(Model)); break;
-		case GModel: PRECACHE_MODEL(Weapon->GModel = STRING(Model)); break;
+		case WBuildModel::VModel: PRECACHE_MODEL(STRING(Weapon.VModel = Model)); break;
+		case WBuildModel::PModel: PRECACHE_MODEL(STRING(Weapon.PModel = Model)); break;
+		case WBuildModel::WModel: PRECACHE_MODEL(Weapon.WModel = STRING(Model)); break;
+		case WBuildModel::GModel: PRECACHE_MODEL(Weapon.GModel = STRING(Model)); break;
 	}
 
 	return NULL;
@@ -1240,7 +1235,6 @@ char *INI_GetValuePointer(char *String)
 	return NULL;
 }
 
-void LoadConfig(const char *Path);
 void OnAmxxAttach(void)
 {
 	MF_AddNatives(AMXX_NATIVES);
@@ -1261,7 +1255,7 @@ void OnAmxxAttach(void)
 			continue;
 
 		Buffer[strlen(Buffer) - 1] = NULL;
-		AnimHashMap.insert(Buffer, AnimHashMap.elements());
+		AnimHashMap.Insert(Buffer, AnimHashMap.Length());
 	}
 
 	fclose(ConfigsFile);
