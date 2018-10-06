@@ -250,15 +250,8 @@ inline int GetEntityTeam(edict_t *Edict)
 	return GetEntityTeam(Edict->pvPrivateData);
 }
 
-inline REAL CellToFloat(cell Value)
-{
-	return *(REAL *)&Value;
-}
-
-inline cell FloatToCell(REAL Value)
-{
-	return *(cell *)&Value;
-}
+#define CellToFloat(Value) (*(REAL *)&Value)
+#define FloatToCell(Value) (*(cell *)&Value)
 
 inline void VectorSub(Vector &InA, Vector &InB, Vector &Out)
 {
