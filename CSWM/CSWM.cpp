@@ -1640,7 +1640,6 @@ BOOL DispatchSpawn_Post(edict_s *Entity)
 void ServerActivate(edict_t *Worldspawn, int MaxEdicts, int MaxPlayers)
 {
 	SET_META_RESULT(MRES_IGNORED);
-	printf("ACTIVATO");
 	CanPrecache = FALSE;
 	SVGame_Edicts = Worldspawn;
 }
