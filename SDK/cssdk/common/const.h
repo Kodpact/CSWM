@@ -111,6 +111,7 @@
 #define SOLID_BBOX				2		// touch on edge, block
 #define SOLID_SLIDEBOX			3		// touch on edge, but not an onground
 #define SOLID_BSP				4		// bsp clip, touch on edge, block
+#define SOLID_CUSTOM			5
 
 // edict->deadflag values
 #define DEAD_NO					0 // alive

@@ -1247,6 +1247,12 @@ void OnAmxxAttach(void)
 
 	FILE *ConfigsFile = fopen(PathName, "rt");
 
+	if (!ConfigsFile)
+	{
+		LOG_CONSOLE(PLID, "[CSWM] 'Anim.lst' File Not Found! (./CSWM/Anim.lst)");
+		return;
+	}
+
 	while (!feof(ConfigsFile))
 	{
 		fgets(Buffer, 127, ConfigsFile);

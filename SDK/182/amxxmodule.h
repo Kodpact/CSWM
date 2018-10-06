@@ -2327,8 +2327,8 @@ int				MF_IsPlayerConnecting		(int id) { }
 int				MF_IsPlayerHLTV				(int id) { }
 int				MF_GetPlayerArmor			(int id) { }
 int				MF_GetPlayerHealth			(int id) { }
-REAL			amx_ctof					(cell x) { }
-cell			amx_ftoc					(float x) { }
+REAL			CellToFloat					(cell x) { }
+cell			FloatToCell					(float x) { }
 int				MF_RegisterSPForwardByName	(AMX * amx, const char *str, ...) { }
 int				MF_RegisterSPForward		(AMX * amx, int func, ...) { }
 void			MF_UnregisterSPForward		(int id) { }

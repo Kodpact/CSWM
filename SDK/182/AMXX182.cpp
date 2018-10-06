@@ -2244,7 +2244,7 @@ static META_FUNCTIONS g_MetaFunctions_Table =
 	GetEngineFunctions_Post
 };
 
-C_DLLEXPORT int Meta_Query(char *ifvers, plugin_info_t **pPlugInfo, mutil_funcs_t *pMetaUtilFuncs)
+DLLEXPORT int Meta_Query(char *ifvers, plugin_info_t **pPlugInfo, mutil_funcs_t *pMetaUtilFuncs)
 {
 	if ((int)CVAR_GET_FLOAT("developer") != 0)
 	{
@@ -2669,7 +2669,6 @@ C_DLLEXPORT int AMXX_Attach(PFN_REQ_FNPTR reqFnptrFunc)
 #ifdef FN_AMXX_ATTACH
 	FN_AMXX_ATTACH();
 #endif // FN_AMXX_ATACH
-
 	return AMXX_OK;
 }
 

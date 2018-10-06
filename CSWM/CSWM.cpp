@@ -121,25 +121,25 @@ void GameDLLInit_Post(void)
 static void __fastcall Weapon_SpawnPistol(CBasePlayerWeapon *BaseWeapon, int)
 {
 	WEAPON_FID(BaseWeapon) = WType::Pistol;
-	static_cast<void(__fastcall *)(CBasePlayerWeapon *, int)>(FWeapon_Spawn[WType::Pistol])(BaseWeapon, NULL);
+	static_cast<void(__fastcall *)(CBasePlayerWeapon *)>(FWeapon_Spawn[WType::Pistol])(BaseWeapon);
 }
 
 static void __fastcall Weapon_SpawnShotgun(CBasePlayerWeapon *BaseWeapon, int)
 {
 	WEAPON_FID(BaseWeapon) = WType::Shotgun;
-	static_cast<void(__fastcall *)(CBasePlayerWeapon *, int)>(FWeapon_Spawn[WType::Shotgun])(BaseWeapon, NULL);
+	static_cast<void(__fastcall *)(CBasePlayerWeapon *)>(FWeapon_Spawn[WType::Shotgun])(BaseWeapon);
 }
 
 static void __fastcall Weapon_SpawnRifle(CBasePlayerWeapon *BaseWeapon, int)
 {
 	WEAPON_FID(BaseWeapon) = WType::Rifle;
-	static_cast<void(__fastcall *)(CBasePlayerWeapon *, int)>(FWeapon_Spawn[WType::Rifle])(BaseWeapon, NULL);
+	static_cast<void(__fastcall *)(CBasePlayerWeapon *)>(FWeapon_Spawn[WType::Rifle])(BaseWeapon);
 }
 
 static void __fastcall Weapon_SpawnSniper(CBasePlayerWeapon *BaseWeapon, int)
 {
 	WEAPON_FID(BaseWeapon) = WType::Sniper;
-	static_cast<void(__fastcall *)(CBasePlayerWeapon *, int)>(FWeapon_Spawn[WType::Sniper])(BaseWeapon, NULL);
+	static_cast<void(__fastcall *)(CBasePlayerWeapon *)>(FWeapon_Spawn[WType::Sniper])(BaseWeapon);
 }
 
 static BOOL __fastcall Weapon_AddToPlayer(CBasePlayerWeapon *BaseWeapon, int, CBasePlayer *BasePlayer)
@@ -165,7 +165,7 @@ static BOOL __fastcall Weapon_AddToPlayer(CBasePlayerWeapon *BaseWeapon, int, CB
 static BOOL __fastcall Weapon_Deploy(CBasePlayerWeapon *BaseWeapon, int)
 {
 	static_cast<BOOL(__fastcall *)(CBasePlayerWeapon *)>(FWeapon_Deploy[WEAPON_FID(BaseWeapon)])(BaseWeapon);
-
+	
 	if (!CUSTOM_WEAPON(BaseWeapon))
 		return TRUE;
 
@@ -187,15 +187,10 @@ static BOOL __fastcall Weapon_Deploy(CBasePlayerWeapon *BaseWeapon, int)
 	return TRUE;
 }
 
-inline void Origin_PrimaryAttack(CBasePlayerWeapon *BaseWeapon)
-{
-	static_cast<void(__fastcall *)(CBasePlayerWeapon *, int)>(FWeapon_PrimaryAttack[WEAPON_FID(BaseWeapon)])(BaseWeapon, NULL);
-}
-
 static void __fastcall Weapon_PrimaryAttack(CBasePlayerWeapon *BaseWeapon, int)
 {
 	if (!CUSTOM_WEAPON(BaseWeapon))
-		return Origin_PrimaryAttack(BaseWeapon);
+		return static_cast<void(__fastcall *)(CBasePlayerWeapon *)>(FWeapon_PrimaryAttack[WEAPON_FID(BaseWeapon)])(BaseWeapon);
 
 	BOOL InAttack2;
 	int Clip, FOV, A2I;
@@ -204,7 +199,7 @@ static void __fastcall Weapon_PrimaryAttack(CBasePlayerWeapon *BaseWeapon, int)
 	CWeapon &Weapon = Weapons[WEAPON_KEY(BaseWeapon)];
 	InAttack2 = WEAPON_INA2(BaseWeapon);
 	A2I = InAttack2 ? Weapon.A2I : A2_None;
-
+	
 	if (A2I == A2_AutoPistol && BaseWeapon->m_flNextPrimaryAttack > 0.0f)
 		return;
 
@@ -231,7 +226,7 @@ static void __fastcall Weapon_PrimaryAttack(CBasePlayerWeapon *BaseWeapon, int)
 		return;
 
 	PunchAngleOld = PlayerEntVars->punchangle;
-	Origin_PrimaryAttack(BaseWeapon);
+	static_cast<void(__fastcall *)(CBasePlayerWeapon *)>(FWeapon_PrimaryAttack[WEAPON_FID(BaseWeapon)])(BaseWeapon);
 
 	//Vector AngleVec;
 	//ANGLEVECTORS(BaseWeapon->m_pPlayer->pev->angles, (float *)&AngleVec, NULL, NULL);
@@ -324,14 +319,17 @@ static void __fastcall Weapon_SecondaryAttack(CBasePlayerWeapon *BaseWeapon, int
 inline int *GetPlayerAmmo(CBasePlayer *BasePlayer, int AmmoID);
 static void __fastcall Weapon_Reload(CBasePlayerWeapon *BaseWeapon, int CustomReload)
 {
+	if (!CUSTOM_WEAPON(BaseWeapon))
+		return static_cast<void(__fastcall *)(CBasePlayerWeapon *)>(FWeapon_Reload[WEAPON_FID(BaseWeapon)])(BaseWeapon);
+	
 	Weapon = &Weapons[WEAPON_KEY(BaseWeapon)];
 
 	if (CUSTOM_WEAPON(BaseWeapon) && Weapon->Forwards[WForward::ReloadPre] && MF_ExecuteForward(Weapon->Forwards[WForward::ReloadPre], NUM_FOR_EDICT(ENT(BaseWeapon->pev))) > WReturn::IGNORED)
 		return;
-
-	static_cast<void(__fastcall *)(CBasePlayerWeapon *, int)>(FWeapon_Reload[CustomReload ? WType::Rifle : WEAPON_FID(BaseWeapon)])(BaseWeapon, 0);
-
-	if (!CUSTOM_WEAPON(BaseWeapon) || !BaseWeapon->m_pPlayer->m_rgAmmo[Weapon->AmmoID] || BaseWeapon->m_iClip == Weapon->Clip)
+	
+	static_cast<void(__fastcall *)(CBasePlayerWeapon *)>(FWeapon_Reload[CustomReload ? WType::Rifle : WEAPON_FID(BaseWeapon)])(BaseWeapon);
+	
+	if (!BaseWeapon->m_pPlayer->m_rgAmmo[Weapon->AmmoID] || BaseWeapon->m_iClip == Weapon->Clip)
 		return;
 
 	BOOL SwitchON = (Weapon->A2I == A2_Switch && WEAPON_INA2(BaseWeapon));
@@ -539,7 +537,7 @@ static void __fastcall Weapon_PostFrame(CBasePlayerWeapon *BaseWeapon, int)
 		CheckWeaponAttack2(BaseWeapon);
 	}
 
-	static_cast<void(__fastcall *)(CBasePlayerWeapon *, int)>(FWeapon_PostFrame[WEAPON_FID(BaseWeapon)])(BaseWeapon, NULL);
+	static_cast<void(__fastcall *)(CBasePlayerWeapon *)>(FWeapon_PostFrame[WEAPON_FID(BaseWeapon)])(BaseWeapon);
 }
 
 static void __fastcall Weapon_Idle(CBasePlayerWeapon *BaseWeapon, int)
@@ -563,7 +561,7 @@ static void __fastcall Weapon_Idle(CBasePlayerWeapon *BaseWeapon, int)
 			BaseWeapon->m_flTimeWeaponIdle = Weapon->DurationList[Animation];
 		}
 	}
-	else static_cast<void(__fastcall *)(CBasePlayerWeapon *, int)>(FWeapon_Idle[Rifle])(BaseWeapon, NULL);
+	else static_cast<void(__fastcall *)(CBasePlayerWeapon *)>(FWeapon_Idle[Rifle])(BaseWeapon);
 }
 
 static void __fastcall Weapon_IdleShotgun(CBasePlayerWeapon *BaseWeapon, int)
@@ -607,7 +605,7 @@ static void __fastcall Weapon_IdleShotgun(CBasePlayerWeapon *BaseWeapon, int)
 			}
 		}
 	}
-	else static_cast<void(__fastcall *)(CBasePlayerWeapon *, int)>(FWeapon_Idle[WType::Shotgun])(BaseWeapon, NULL);
+	else static_cast<void(__fastcall *)(CBasePlayerWeapon *)>(FWeapon_Idle[WType::Shotgun])(BaseWeapon);
 }
 
 static void __fastcall Weapon_Holster(CBasePlayerWeapon *BaseWeapon, int, int SkipLocal)
@@ -639,7 +637,7 @@ static void __fastcall Weapon_Holster(CBasePlayerWeapon *BaseWeapon, int, int Sk
 static float __fastcall Weapon_GetMaxSpeed(CBasePlayerWeapon *BaseWeapon, int)
 {
 	if (!CUSTOM_WEAPON(BaseWeapon))
-		return static_cast<float(__fastcall *)(CBasePlayerWeapon *, int)>(FWeapon_GetMaxSpeed[WEAPON_FID(BaseWeapon)])(BaseWeapon, NULL);
+		return static_cast<float(__fastcall *)(CBasePlayerWeapon *)>(FWeapon_GetMaxSpeed[WEAPON_FID(BaseWeapon)])(BaseWeapon);
 
 	float Speed = Weapons[WEAPON_KEY(BaseWeapon)].Speed;
 
@@ -664,7 +662,7 @@ static int __fastcall Weapon_ExtractAmmo(CBasePlayerWeapon *BaseWeapon, int, CBa
 static void __fastcall Weapon_SendWeaponAnim(CBasePlayerWeapon *BaseWeapon, int, int Anim, int SkipLocal)
 {
 	if (!CUSTOM_WEAPON(BaseWeapon) || !Weapons[WEAPON_KEY(BaseWeapon)].AnimR)
-		SendWeaponAnim(BaseWeapon, Anim);
+		static_cast<int(__fastcall *)(CBasePlayerWeapon *, int, int, int)>(FWeapon_SendWeaponAnim[WEAPON_FID(BaseWeapon)])(BaseWeapon, NULL, Anim, SkipLocal);
 }
 
 static void SendWeaponAnim(CBasePlayerWeapon *BaseWeapon, int Anim)
@@ -857,7 +855,7 @@ static void TraceAttackContinue(CBaseEntity *BaseEntity, entvars_t *AttackerVars
 static void __fastcall ProjectileThink(CBaseEntity *BaseEntity, int)
 {
 	if (PROJECTILE_TYPE(BaseEntity) != PType::PLIMITED_TIME)
-		static_cast<void(__fastcall *)(CBaseEntity *BaseEntity, int)>(FProjectileThink)(BaseEntity, NULL);
+		static_cast<void(__fastcall *)(CBaseEntity *BaseEntity)>(FProjectileThink)(BaseEntity);
 	else
 		MF_ExecuteForward(PROJECTILE_FORWARD(BaseEntity), NUM_FOR_EDICT(ENT(BaseEntity->pev)));
 }
@@ -876,7 +874,7 @@ static void __fastcall ProjectileTouch(CBaseEntity *BaseEntity, int, CBaseEntity
 static void __fastcall EffectThink(CBaseEntity *BaseEntity, int)
 {
 	if (EFFECT_TYPE(BaseEntity) != EType::ELIMITED_TIME)
-		static_cast<void(__fastcall *)(CBaseEntity *BaseEntity, int)>(FEffectThink)(BaseEntity, NULL);
+		static_cast<void(__fastcall *)(CBaseEntity *BaseEntity)>(FEffectThink)(BaseEntity);
 	else
 	{
 		float NextFrame = BaseEntity->pev->frame + BaseEntity->pev->framerate * (gpGlobals->time - EFFECT_LAST_TIME(BaseEntity));
@@ -1065,7 +1063,7 @@ void ClientCommand(edict_t *PlayerEdict)
 	SET_META_RESULT(MRES_SUPERCEDE);
 
 	const char *Command = CMD_ARGV(0);
-
+	
 	if (!stricmp(Command, "give"))
 	{
 		if (CVar_CheatsPointer->value)
@@ -1642,7 +1640,7 @@ BOOL DispatchSpawn_Post(edict_s *Entity)
 void ServerActivate(edict_t *Worldspawn, int MaxEdicts, int MaxPlayers)
 {
 	SET_META_RESULT(MRES_IGNORED);
-
+	printf("ACTIVATO");
 	CanPrecache = FALSE;
 	SVGame_Edicts = Worldspawn;
 }

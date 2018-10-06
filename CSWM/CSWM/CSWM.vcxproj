@@ -92,7 +92,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Custom</Optimization>
-      <PreprocessorDefinitions>CSWM_EXPORTS;HAVE_STDINT_H;NDEBUG;_NDEBUG;_CRT_SECURE_NO_WARNINGS;__METAMOD_BUILD__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>CSWM_EXPORTS;HAVE_STDINT_H;NDEBUG;_NDEBUG;_CRT_SECURE_NO_WARNINGS;__METAMOD_BUILD__;SDK_UTIL_H;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(IncludePath)</AdditionalIncludeDirectories>
       <ShowIncludes>false</ShowIncludes>
       <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>

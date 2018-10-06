@@ -116,10 +116,8 @@ inline entvars_t *VARS(EOFFSET eoffset)
 	return VARS(ENT(eoffset));
 }
 
-#ifndef ENTINDEX
 inline int ENTINDEX(const edict_t *pEdict) { return (*g_engfuncs.pfnIndexOfEdict)(pEdict); }
 inline int ENTINDEX(const entvars_t *pev) { return (*g_engfuncs.pfnIndexOfEdict)(ENT(pev)); }
-#endif // ENTINDEX
 
 #ifndef INDEXENT
 //inline edict_t *INDEXENT(int iEdictNum) { return (*g_engfuncs.pfnPEntityOfEntIndex)(iEdictNum); }
