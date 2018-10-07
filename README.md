@@ -8,7 +8,7 @@ Counter-Strike Weapon Mod :gun:
 - Custom ammo types
 - Presets for Attack2
 - Forwards and flags for custom weapon
-- For any Mod
+- For any Mod (ZP, BB, Classic...)
 
 # [Wiki](https://github.com/BeqaGurgenidze/CSWM/wiki)
 <br>
