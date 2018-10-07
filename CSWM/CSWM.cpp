@@ -276,8 +276,8 @@ static void __fastcall Weapon_PrimaryAttack(CBasePlayerWeapon *BaseWeapon, int)
 	BaseWeapon->m_flNextSecondaryAttack = 0.1f;
 	BaseWeapon->m_flTimeWeaponIdle = (A2I == A2_Switch) ? Weapon.A2V->WA2_SWITCH_ANIM_SHOOT_DURATION : Weapon.DurationList.Get(Anim);
 
-	EMIT_SOUND(ENT(BaseWeapon->pev)/*ENT(PlayerEntVars)*/, CHAN_VOICE, A2I == A2_Switch ? Weapon.A2V->WA2_SWITCH_FSOUND : Weapon.FireSound);
-
+	EMIT_SOUND_DYN2(ENT(PlayerEntVars), CHAN_WEAPON, A2I == A2_Switch ? Weapon.A2V->WA2_SWITCH_FSOUND : Weapon.FireSound, VOL_NORM, ATTN_NORM, 0, PITCH_NORM);
+	
 	switch (A2I)
 	{
 		case A2_None: break;
@@ -617,6 +617,9 @@ static void __fastcall Weapon_Holster(CBasePlayerWeapon *BaseWeapon, int, int Sk
 
 	Weapon = &Weapons[WEAPON_KEY(BaseWeapon)];
 
+	if (!Weapon)
+		return;
+	
 	if (Weapon->A2I == A2_KnifeAttack && WEAPON_INA2_DELAY(BaseWeapon))
 		STOP_SOUND(ENT(BaseWeapon->pev), CHAN_VOICE, Weapon->A2V->WA2_KNIFEATTACK_SOUND);
 
@@ -1010,7 +1013,7 @@ void UpdateClientData_Post(const edict_s *PlayerEdict, int SendWeapons, clientda
 	CBasePlayerItem *BaseWeapon = (((CBasePlayer *)PlayerEdict->pvPrivateData)->m_pActiveItem);
 
 	if (BaseWeapon && CUSTOM_WEAPON(BaseWeapon))
-		CD->m_flNextAttack += 1;
+		CD->m_flNextAttack = gpGlobals->time + 0.001f;
 
 	RETURN_META(MRES_IGNORED);
 }
@@ -1644,7 +1647,7 @@ void ServerActivate(edict_t *Worldspawn, int MaxEdicts, int MaxPlayers)
 	SVGame_Edicts = Worldspawn;
 }
 
-void ServerDeactivate(void)
+void ServerDeactivate_Post(void)
 {
 	Initialized = FALSE;
 

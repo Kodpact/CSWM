@@ -110,7 +110,7 @@
 #define FN_ClientCommand				ClientCommand				/* pfnClientCommand()			(wd) Player has sent a command (typed or from a bind) */
 // #define FN_ClientUserInfoChanged		ClientUserInfoChanged		/* pfnClientUserInfoChanged()	(wd) Client has updated their setinfo structure */
 #define FN_ServerActivate				ServerActivate				/* pfnServerActivate()			(wd) Server is starting a new map */
-#define FN_ServerDeactivate				ServerDeactivate			/* pfnServerDeactivate()		(wd) Server is leaving the map (shutdown or changelevel); SDK2 */
+// #define FN_ServerDeactivate				ServerDeactivate			/* pfnServerDeactivate()		(wd) Server is leaving the map (shutdown or changelevel); SDK2 */
 // #define FN_PlayerPreThink			PlayerPreThink				/* pfnPlayerPreThink() */
 // #define FN_PlayerPostThink			PlayerPostThink				/* pfnPlayerPostThink() */
 // #define FN_StartFrame				StartFrame					/* pfnStartFrame() */
@@ -162,7 +162,7 @@
 // #define FN_ClientCommand_Post				ClientCommand_Post
 // #define FN_ClientUserInfoChanged_Post			ClientUserInfoChanged_Post
 // #define FN_ServerActivate_Post				ServerActivate_Post
-// #define FN_ServerDeactivate_Post				ServerDeactivate_Post
+#define FN_ServerDeactivate_Post				ServerDeactivate_Post
 // #define FN_PlayerPreThink_Post				PlayerPreThink_Post
 // #define FN_PlayerPostThink_Post				PlayerPostThink_Post
 // #define FN_StartFrame_Post					StartFrame_Post
@@ -315,7 +315,7 @@
 // #define FN_SetPhysicsKeyValue				SetPhysicsKeyValue
 // #define FN_GetPhysicsInfoString				GetPhysicsInfoString
 // #define FN_PrecacheEvent						PrecacheEvent
-// #define FN_PlaybackEvent						PlaybackEvent
+#define FN_PlaybackEvent						PlaybackEvent
 // #define FN_SetFatPVS							SetFatPVS
 // #define FN_SetFatPAS							SetFatPAS
 // #define FN_CheckVisibility					CheckVisibility
