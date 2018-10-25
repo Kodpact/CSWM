@@ -3,23 +3,23 @@
 #include "18X/Config.h"
 #include "182/AMXX.h"
 
-#include "metamod\meta_api.h"
-#include "metamod\meta_eiface.h"
+#include "..\SDK\metamod\meta_api.h"
+#include "..\SDK\metamod\meta_eiface.h"
 
-#include "dlls\cbase.h"
-#include "dlls\func_break.h"
-#include "dlls\player.h"
-#include "dlls\decals.h"
-#include "common\usercmd.h"
-#include "common\entity_state.h"
-#include "dlls\regamedll_api.h"
-#include "dlls\regamedll_common.h"
-#include "dlls\regamedll_const.h"
-#include "dlls\regamedll_interfaces.h"
-#include "dlls\monsters.h"
-#include "dlls\weapons.h"
-#include "engine\maintypes.h"
-#include "engine\studio.h"
+#include "..\cssdk\dlls\cbase.h"
+#include "..\cssdk\dlls\func_break.h"
+#include "..\cssdk\dlls\player.h"
+#include "..\cssdk\dlls\decals.h"
+#include "..\cssdk\common\usercmd.h"
+#include "..\cssdk\common\entity_state.h"
+#include "..\cssdk\dlls\regamedll_api.h"
+#include "..\cssdk\dlls\regamedll_common.h"
+#include "..\cssdk\dlls\regamedll_const.h"
+#include "..\cssdk\dlls\regamedll_interfaces.h"
+#include "..\cssdk\dlls\monsters.h"
+#include "..\cssdk\dlls\weapons.h"
+#include "..\cssdk\engine\maintypes.h"
+#include "..\cssdk\engine\studio.h"
 
 #include "Attack2.h"
 #include "CSWM.h"
@@ -37,18 +37,3 @@ extern enginefuncs_t *g_pengfuncsTable;
 extern enginefuncs_t *g_pengfuncsTable_Post;
 extern NEW_DLL_FUNCTIONS *g_pNewFunctionsTable;
 extern NEW_DLL_FUNCTIONS *g_pNewFunctionsTable_Post;
-
-extern IReGameApi *ReGameApi;
-extern const ReGameFuncs_t *ReGameFuncs;
-extern IReGameHookchains *ReGameHookchains;
-
-#define ANGLEVECTORS        (*g_engfuncs.pfnAngleVectors)
-#define CLIENT_PRINT        (*g_engfuncs.pfnClientPrintf)
-#define CVAR_DIRECTSET      (*g_engfuncs.pfnCvar_DirectSet)
-#define GETCLIENTLISTENING  (*g_engfuncs.pfnVoice_GetClientListening)
-#define RUNPLAYERMOVE       (*g_engfuncs.pfnRunPlayerMove)
-#define SETCLIENTLISTENING  (*g_engfuncs.pfnVoice_SetClientListening)
-#define SETCLIENTMAXSPEED   (*g_engfuncs.pfnSetClientMaxspeed)
-
-#define min(x, y) x > y ? y : x
-#define max(x, z) x > y ? x : y

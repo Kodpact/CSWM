@@ -89,6 +89,16 @@ extern enginefuncs_t g_engfuncs;
 #define REGISTER_TUTOR_MESSAGE_SHOWN	(*g_engfuncs.pfnRegisterTutorMessageShown)
 #define GET_TIMES_TUTOR_MESSAGE_SHOWN	(*g_engfuncs.pfnGetTimesTutorMessageShown)
 #define ENG_CHECK_PARM			(*g_engfuncs.pfnEngCheckParm)
+#define ANGLEVECTORS        (*g_engfuncs.pfnAngleVectors)
+#define CLIENT_PRINT        (*g_engfuncs.pfnClientPrintf)
+#define CVAR_DIRECTSET      (*g_engfuncs.pfnCvar_DirectSet)
+#define GETCLIENTLISTENING  (*g_engfuncs.pfnVoice_GetClientListening)
+#define RUNPLAYERMOVE       (*g_engfuncs.pfnRunPlayerMove)
+#define SETCLIENTLISTENING  (*g_engfuncs.pfnVoice_SetClientListening)
+#define SETCLIENTMAXSPEED   (*g_engfuncs.pfnSetClientMaxspeed)
+
+#define min(x, y) x > y ? y : x
+#define max(x, z) x > y ? x : y
 
 //inline void MESSAGE_BEGIN(int msg_dest, int msg_type, const float *pOrigin = NULL, edict_t *ed = NULL) { (*g_engfuncs.pfnMessageBegin)(msg_dest, msg_type, pOrigin, ed); }
 

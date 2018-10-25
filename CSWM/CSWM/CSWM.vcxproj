@@ -129,7 +129,7 @@
       <MapExports>false</MapExports>
       <GenerateWindowsMetadata>false</GenerateWindowsMetadata>
       <ShowProgress>LinkVerboseCLR</ShowProgress>
-      <TargetMachine>MachineX64</TargetMachine>
+      <TargetMachine>MachineX86</TargetMachine>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -148,7 +148,7 @@
       <WholeProgramOptimization>true</WholeProgramOptimization>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <AssemblerOutput>AssemblyAndSourceCode</AssemblerOutput>
-      <Optimization>Disabled</Optimization>
+      <Optimization>Full</Optimization>
       <WarningLevel>Level4</WarningLevel>
     </ClCompile>
     <Link>
@@ -156,6 +156,9 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <LinkErrorReporting>NoErrorReport</LinkErrorReporting>
     </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>true</LinkLibraryDependencies>
+    </ProjectReference>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
