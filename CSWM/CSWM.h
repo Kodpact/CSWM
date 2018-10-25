@@ -1,6 +1,7 @@
 #pragma once
 
 #include "List.h"
+#include "182/AMXX.h"
 
 #define CUSTOM_WEAPON(BaseWeapon) BaseWeapon->ammo_338mag
 #define WEAPON_FID(BaseWeapon) BaseWeapon->ammo_57mm
@@ -13,7 +14,6 @@
 #define WEAPON_INA2_DELAY(BaseWeapon) BaseWeapon->maxammo_762nato
 
 #define WEAPON_INBURST(BaseWeapon) BaseWeapon->maxammo_556nato
-#define WEAPON_OWNER(BaseWeapon) BaseWeapon->pev->owner
 #define WEAPON_FLAGS(BaseWeapon) BaseWeapon->maxammo_338mag
 #define WEAPON_KEY_EX(BaseWeaponEnt) BaseWeaponEnt->v.iuser3
 #define WEAPON_CLIP(BaseWeapon) BaseWeapon->m_iClip
@@ -26,28 +26,28 @@
 #define EFFECT_MAX_FRAMES(BaseEntity) BaseEntity->pev->fuser3
 #define EFFECT_LAST_TIME(BaseEntity) BaseEntity->pev->fuser2
 
-enum WDetectAnim
+enum
 {
 	DETECT_DRAW,
 	DETECT_SHOOT,
 	DETECT_RELOAD,
 };
 
-enum WBuildModel
+enum
 {
-	VModel,
-	PModel,
-	WModel,
-	GModel,
+	BUILD_VIEW,
+	BUILD_WEAP,
+	BUILD_WORLD,
+	BUILD_LIST,
 };
 
-enum PType
+enum
 {
 	PLIMITED_TOUCH = 1,
 	PLIMITED_TIME,
 };
 
-enum EType
+enum
 {
 	ELIMITED_TIME = 1,
 };
@@ -92,13 +92,43 @@ enum WShotgunReloadType
 
 enum WData
 {
-	WData_IsCustom,
-	WData_Attack2,
-	WData_Attack2Offset,
-	WData_InAttack2,
-	WData_InAttack2Delay,
-	WData_Flags,
-	WData_Key,
+	WD_VModel,
+	WD_PModel,
+	WD_Model,
+	WD_Name,
+	WD_FireSound,
+	WD_WModel,
+	WD_GModel,
+	WD_Type,
+	WD_AnimD,
+	WD_AnimS,
+	WD_AnimR,
+	WD_Clip,
+	WD_AmmoID,
+	WD_Deploy,
+	WD_Reload,
+	WD_Delay,
+	WD_Damage,
+	WD_Recoil,
+	WD_Flags,
+	WD_A2I,
+	WD_Speed,
+	WD_Forwards,
+	WD_DurationList,
+};
+
+enum WEData
+{
+	WED_Custom,
+	WED_FID,
+	WED_Key,
+	WED_CurBurst,
+	WED_A2,
+	WED_A2_Offset,
+	WED_INA2,
+	WED_INA2_Delay,
+	WED_INBurst,
+	WED_Flags,
 };
 
 enum WLimit
@@ -115,13 +145,12 @@ struct CWeapon
 	string_t VModel, PModel;
 	const char *Model, *Name, *FireSound, *WModel, *GModel;
 	WType Type;
-	int ID;
 	int AnimD;
 	List<int> AnimS;
 	int AnimR;
 
 	int Clip;
-	int AmmoID;
+	AmmoType AmmoID;
 
 	float Deploy;
 	float Reload;
@@ -176,7 +205,25 @@ struct CCleaveDamageInfo
 	int DamageType;
 };
 
-enum WZoom
+struct CParam
+{
+	char *Name;
+	int Type;
+	int Offset;
+};
+
+enum ParamType
+{
+	TYPE_INT,
+	TYPE_FLOAT,
+	TYPE_STRING,
+	TYPE_ARRAY,
+	TYPE_STRINT,
+	TYPE_OTHER1,
+	TYPE_OTHER2,
+};
+
+enum ZoomType
 {
 	CS_SECOND_AWP_ZOOM = 10,
 	CS_SECOND_NONAWP_ZOOM = 15,
@@ -221,7 +268,7 @@ enum RDFlag
 	Knockback = BIT(2),
 };
 
-enum WAnimXM1014
+enum
 {
 	XM1014_IDLE,
 	XM1014_FIRE1,
@@ -250,6 +297,7 @@ inline int GetEntityTeam(edict_t *Edict)
 	return GetEntityTeam(Edict->pvPrivateData);
 }
 
+#define GetAMXAddr(ValueA, ValueB) (cell *)(ValueA->base + (int)(((AMX_HEADER *)ValueA->base)->dat + ValueB))
 #define CellToFloat(Value) (*(REAL *)&Value)
 #define FloatToCell(Value) (*(cell *)&Value)
 
@@ -274,5 +322,23 @@ inline void VectorSum(Vector &InA, Vector &InB, Vector &Out)
 	Out.z = InA.z + InB.z;
 }
 
+// CSWM.cpp
+
 void GiveWeaponByName(edict_t *PlayerEdict, const char *Name);
 void GiveWeapon(edict_t *PlayerEdict, int Index);
+void UpdateAmmoList();
+void SendWeaponAnim(CBasePlayerWeapon *BaseWeapon, int Anim);
+cell ShootProjectileTimed(edict_t *LauncherEdict, int ProjectileID);
+cell ShootProjectileContact(edict_t *LauncherEdict, int ProjectileID);
+cell ShootEffect(edict_t *LauncherEdict, int EffectID);
+int Player_GiveAmmoByID(CBasePlayer *BasePlayer, int AmmoID, int Amount);
+void PlayerKnockback(edict_t *VictimEdict, Vector &Origin, float Knockback);
+BOOL InViewCone(edict_t *PlayerEdict, Vector &Origin, BOOL Accurate);
+BOOL InViewCone(Vector &SelfOrigin, Vector &VAngles, float FOV, Vector &Origin, BOOL Accurate);
+void StatusIconNumber(edict_t *PlayerEdict, BOOL Status, char Number);
+inline int *GetPlayerAmmo(CBasePlayer *BasePlayer, int AmmoID); 
+
+// Module.cpp
+
+void LoadWeapons(void);
+void SetAnimation(edict_t *PlayerEdict, int Animation, Activity IActivity, float FrameRate = 1.0);

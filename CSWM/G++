@@ -1,0 +1,1 @@
+g++ -I ./18X -I ../ -I ../SDK/ -I ../SDK/metamod/ -I ../SDK/cssdk/ -I ../SDK/cssdk/public -I ../SDK/cssdk/pm_shared -I ../SDK/cssdk/engine -I ../SDK/cssdk/dlls -I ../SDK/cssdk/common -D CSWM_EXPORTS -D HAVE_STDINT_H -D NDEBUG -D _CRT_SECURE_NO_WARNINGS -D __METAMOD_BUILD__ -D SDK_UTIL_H -D linux cswm.cpp 182/amxx.cpp

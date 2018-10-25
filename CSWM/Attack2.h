@@ -17,17 +17,8 @@ enum WAttack2
 	A2_AutoPistol,
 	A2_MultiShot,
 	A2_KnifeAttack,
-	A2_RadiusDamage,
-	A2_Charge,
 	A2_InstaSwitch,
-	A2_Custom,
-};
-
-enum
-{
-	ICON_DISABLED,
-	ICON_ENABLED,
-	ICON_FLASH
+	A2_ZoomCustom,
 };
 
 struct CAutoPistol
@@ -40,23 +31,21 @@ struct CAutoPistol
 struct A2V
 {
 	int IParamA;
-	int IParamB;
-	int IParamC;
-	int IParamD;
-	int IParamE;
-	int IParamF;
-
 	float FParamA;
+	const char *SParamA;
+	int IParamB;
 	float FParamB;
+	const char *SParamB;
+	int IParamC;
 	float FParamC;
+	int IParamD;
 	float FParamD;
+	int IParamE;
 	float FParamE;
+	int IParamF;
 	float FParamF;
 	float FParamG;
 	float FParamH;
-	
-	const char *SParamA;
-	const char *SParamB;
 };
 
 #define WA2_ZOOM_MODE IParamA
@@ -95,17 +84,6 @@ struct A2V
 #define WA2_KNIFEATTACK_MULTI IParamD
 #define WA2_KNIFEATTACK_SOUND SParamA
 
-#define WA2_CHARGE_ANIM_A IParamA
-#define WA2_CHARGE_ANIM_B IParamB
-#define WA2_CHARGE_ANIM_C IParamC
-#define WA2_CHARGE_ANIM_D IParamD
-#define WA2_CHARGE_ANIM_A_CYCLE FParamA
-#define WA2_CHARGE_ANIM_B_CYCLE FParamB
-#define WA2_CHARGE_ANIM_C_CYCLE FParamC
-#define WA2_CHARGE_ANIM_D_CYCLE FParamD
-#define WA2_CHARGE_TIME FParamE
-#define WA2_CHARGE_DAMAGE FParamF
-
 #define WA2_INSTASWITCH_ANIM_SHOOT IParamA
 #define WA2_INSTASWITCH_DELAY FParamA
 #define WA2_INSTASWITCH_DAMAGE FParamB
@@ -113,12 +91,15 @@ struct A2V
 #define WA2_INSTASWITCH_NAME SParamA
 #define WA2_INSTASWITCH_NAME2 SParamB
 
+#define WA2_ZOOM_CUSTOM_FOV IParamA
+
 #include "CSWM.h"
 
-static void Attack2_Zoom(CBasePlayer *BasePlayer, int ZoomType);
+static void Attack2_Zoom(CBasePlayer *BasePlayer, CBasePlayerWeapon *BaseWeapon, int Type);
 static void Attack2_Switch(CBasePlayer *BasePlayer, CBasePlayerWeapon *BaseWeapon, CWeapon &Weapon);
 static void Attack2_Burst(CBasePlayer *BasePlayer, CBasePlayerWeapon *BaseWeapon, CWeapon &Weapon);
 static void Attack2_MultiShot(CBasePlayerWeapon *BaseWeapon, CWeapon &Weapon);
 static void Attack2_KnifeAttack(CBasePlayer *BasePlayer, CBasePlayerWeapon *BaseWeapon, CWeapon &Weapon);
 static void Attack2_KnifeAttackPerform(CBasePlayerWeapon *BaseWeapon);
 static void Attack2_InstaSwitch(edict_t *Playeredict, CBasePlayerWeapon *BaseWeapon, CWeapon &Weapon);
+static void Attack2_ZoomCustom(CBasePlayer *BasePlayer, CBasePlayerWeapon *BaseWeapon, int Type);
