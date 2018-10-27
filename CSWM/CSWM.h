@@ -301,26 +301,32 @@ inline int GetEntityTeam(edict_t *Edict)
 #define CellToFloat(Value) (*(REAL *)&Value)
 #define FloatToCell(Value) (*(cell *)&Value)
 
+#ifndef VectorSub
 inline void VectorSub(Vector &InA, Vector &InB, Vector &Out)
 {
 	Out.x = InA.x - InB.x;
 	Out.y = InA.y - InB.y;
 	Out.z = InA.z - InB.z;
 }
+#endif
 
+#ifndef VectorMulScalar
 inline void VectorMulScalar(Vector &InA, float Scale, Vector &Out)
 {
 	Out.x = InA.x * Scale;
 	Out.y = InA.y * Scale;
 	Out.z = InA.z * Scale;
 }
+#endif
 
+#ifndef VectorSum
 inline void VectorSum(Vector &InA, Vector &InB, Vector &Out)
 {
 	Out.x = InA.x + InB.x;
 	Out.y = InA.y + InB.y;
 	Out.z = InA.z + InB.z;
 }
+#endif
 
 // CSWM.cpp
 
@@ -336,7 +342,7 @@ void PlayerKnockback(edict_t *VictimEdict, Vector &Origin, float Knockback);
 BOOL InViewCone(edict_t *PlayerEdict, Vector &Origin, BOOL Accurate);
 BOOL InViewCone(Vector &SelfOrigin, Vector &VAngles, float FOV, Vector &Origin, BOOL Accurate);
 void StatusIconNumber(edict_t *PlayerEdict, BOOL Status, char Number);
-inline int *GetPlayerAmmo(CBasePlayer *BasePlayer, int AmmoID); 
+inline int *GetPlayerAmmo(CBasePlayer *BasePlayer, int AmmoID);
 
 // Module.cpp
 

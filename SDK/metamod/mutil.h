@@ -1,59 +1,7 @@
-// vi: set ts=4 sw=4 :
-// vim: set tw=75 :
+#ifndef INCLUDE_MUTIL_H
+#define INCLUDE_MUTIL_H
 
-// mutil.h - prototypes for utility functions to provide to plugins
-
-/*
- * Copyright (c) 2001-2006 Will Day <willday@hpgx.net>
- *
- *    This file is part of Metamod.
- *
- *    Metamod is free software; you can redistribute it and/or modify it
- *    under the terms of the GNU General Public License as published by the
- *    Free Software Foundation; either version 2 of the License, or (at
- *    your option) any later version.
- *
- *    Metamod is distributed in the hope that it will be useful, but
- *    WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *    General Public License for more details.
- *
- *    You should have received a copy of the GNU General Public License
- *    along with Metamod; if not, write to the Free Software Foundation,
- *    Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- *    In addition, as a special exception, the author gives permission to
- *    link the code of this program with the Half-Life Game Engine ("HL
- *    Engine") and Modified Game Libraries ("MODs") developed by Valve,
- *    L.L.C ("Valve").  You must obey the GNU General Public License in all
- *    respects for all of the code used other than the HL Engine and MODs
- *    from Valve.  If you modify this file, you may extend this exception
- *    to your version of the file, but you are not obligated to do so.  If
- *    you do not wish to do so, delete this exception statement from your
- *    version.
- *
- */
-
-#ifndef MUTIL_H
-#define MUTIL_H
-
-#include "comp_dep.h"
-#include "plinfo.h"		// plugin_info_t, etc
-#include "mhook.h"		// game_event_t, etc
-#include "sdk_util.h"	// hudtextparms_t, etc
-
-// max buffer size for printed messages
 #define MAX_LOGMSG_LEN  1024
-
-// For GetGameInfo:
-typedef enum {
-	GINFO_NAME = 0,
-	GINFO_DESC,
-	GINFO_GAMEDIR,
-	GINFO_DLL_FULLPATH,
-	GINFO_DLL_FILENAME,
-	GINFO_REALDLL_FULLPATH,
-} ginfo_t;
 
 // Meta Utility Function table type.
 typedef struct meta_util_funcs_s {
@@ -83,7 +31,6 @@ typedef struct meta_util_funcs_s {
 	
 	void            (*pfnGetHookTables)             (plid_t plid, enginefuncs_t **peng, DLL_FUNCTIONS **pdll, NEW_DLL_FUNCTIONS **pnewdll);
 } mutil_funcs_t;
-extern mutil_funcs_t MetaUtilFunctions DLLHIDDEN;
 
 // Convenience macros for MetaUtil functions
 #define LOG_CONSOLE			(*gpMetaUtilFuncs->pfnLogConsole)
@@ -105,4 +52,4 @@ extern mutil_funcs_t MetaUtilFunctions DLLHIDDEN;
 #define MAKE_REQUESTID		(*gpMetaUtilFuncs->pfnMakeRequestID)
 #define GET_HOOK_TABLES         (*gpMetaUtilFuncs->pfnGetHookTables)
 
-#endif /* MUTIL_H */
+#endif

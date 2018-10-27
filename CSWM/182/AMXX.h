@@ -7,18 +7,16 @@
 #ifndef __AMXXMODULE_H__
 #define __AMXXMODULE_H__
 
-// config
-#include "../18X/Config.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <Windows.h>
 
-#include <stddef.h> // size_t
-// metamod include files
-#ifdef USE_METAMOD
-#include "extdll.h"
-#include "meta_api.h"
-#include "enginecallback.h"
-#include "dlls/util.h"
-#include "osdep.h"
-#endif // #ifdef USE_METAMOD
+#include "cssdk.h"
+#include "metamod.h"
+
+#include "../18X/Config.h"
 
 // DLL Export
 #undef DLLEXPORT
@@ -2055,7 +2053,7 @@ void FN_AMXX_PLUGINSUNLOADED(void);
 #endif // FN_AMXX_PLUGINSUNLOADED
 
 // *** Types ***
-typedef void* (*PFN_REQ_FNPTR)(const char * /*name*/);
+typedef void* (*PFN_REFNPTR)(const char * /*name*/);
 
 // ***** Module funcs stuff *****
 enum ForwardExecType
@@ -2264,7 +2262,7 @@ extern PFN_GET_PLAYER_EDICT			g_fn_GetPlayerEdict;
 extern PFN_FORMAT					g_fn_Format;
 extern PFN_GET_PLAYER_TEAM			g_fn_GetPlayerTeam;
 extern PFN_REGISTERFUNCTION			g_fn_RegisterFunction;
-extern PFN_REQ_FNPTR				g_fn_RequestFunction;
+extern PFN_REFNPTR				g_fn_RequestFunction;
 extern PFN_AMX_PUSH					g_fn_AmxPush;
 extern PFN_SET_TEAM_INFO			g_fn_SetTeamInfo;
 extern PFN_PLAYER_PROP_ADDR			g_fn_PlayerPropAddr;

@@ -1,25 +1,15 @@
 #pragma once
+#include <stdio.h>
+#include <stdlib.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <Windows.h>
 
 #include "18X/Config.h"
 #include "182/AMXX.h"
 
-#include "..\SDK\metamod\meta_api.h"
-#include "..\SDK\metamod\meta_eiface.h"
-
-#include "..\cssdk\dlls\cbase.h"
-#include "..\cssdk\dlls\func_break.h"
-#include "..\cssdk\dlls\player.h"
-#include "..\cssdk\dlls\decals.h"
-#include "..\cssdk\common\usercmd.h"
-#include "..\cssdk\common\entity_state.h"
-#include "..\cssdk\dlls\regamedll_api.h"
-#include "..\cssdk\dlls\regamedll_common.h"
-#include "..\cssdk\dlls\regamedll_const.h"
-#include "..\cssdk\dlls\regamedll_interfaces.h"
-#include "..\cssdk\dlls\monsters.h"
-#include "..\cssdk\dlls\weapons.h"
-#include "..\cssdk\engine\maintypes.h"
-#include "..\cssdk\engine\studio.h"
+#include "cssdk.h"
+#include "metamod.h"
 
 #include "Attack2.h"
 #include "CSWM.h"
@@ -37,3 +27,7 @@ extern enginefuncs_t *g_pengfuncsTable;
 extern enginefuncs_t *g_pengfuncsTable_Post;
 extern NEW_DLL_FUNCTIONS *g_pNewFunctionsTable;
 extern NEW_DLL_FUNCTIONS *g_pNewFunctionsTable_Post;
+
+extern meta_globals_t *META_GLOBALS;
+extern gamedll_funcs_t *META_GAMEDLLFUNCS;
+extern mutil_funcs_t *META_UTILFUNCS;

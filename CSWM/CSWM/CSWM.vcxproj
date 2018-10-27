@@ -21,20 +21,20 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{88C50D10-FE42-4BE5-A9E2-9922FC3C29B8}</ProjectGuid>
     <RootNamespace>CSWM</RootNamespace>
-    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>NotSet</CharacterSet>
     <WholeProgramOptimization>false</WholeProgramOptimization>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>NotSet</CharacterSet>
   </PropertyGroup>
@@ -84,7 +84,7 @@
     <OutDir>D:\CSDS\cstrike\addons\amxmodx\modules\</OutDir>
     <IntDir>D:\CSDS\cstrike\addons\amxmodx\modules\int_cswm\</IntDir>
     <TargetName>cswm_amxx</TargetName>
-    <IncludePath>..\;..\18X;..\..\SDK\;..\..\SDK\public;..\..\SDK\metamod;..\..\SDK\cssdk;..\..\SDK\cssdk\public;..\..\SDK\cssdk\pm_shared;..\..\SDK\cssdk\game_shared;..\..\SDK\cssdk\engine;..\..\SDK\cssdk\dlls;..\..\SDK\cssdk\common;$(IncludePath)</IncludePath>
+    <IncludePath>..\;..\18X;..\..\SDK\;..\..\SDK\cssdk\;..\..\SDK\metamod\;$(IncludePath)</IncludePath>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
     <CodeAnalysisRules />
     <CodeAnalysisRuleAssemblies />
@@ -144,12 +144,13 @@
       <DebugInformationFormat>None</DebugInformationFormat>
       <ErrorReporting>None</ErrorReporting>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(IncludePath)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>NDEBUG;SDK_UTIL_H;__METAMOD_BUILD__;HAVE_STDINT_H;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>HAVE_STDINT_H;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <WholeProgramOptimization>true</WholeProgramOptimization>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <AssemblerOutput>AssemblyAndSourceCode</AssemblerOutput>
       <Optimization>Full</Optimization>
       <WarningLevel>Level4</WarningLevel>
+      <ShowIncludes>false</ShowIncludes>
     </ClCompile>
     <Link>
       <SubSystem>NotSet</SubSystem>

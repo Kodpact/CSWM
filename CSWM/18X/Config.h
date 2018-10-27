@@ -3,7 +3,6 @@
 // Module info
 #define MODULE_NAME "CSWM"
 #define MODULE_VERSION "1.7"
-#define MODULE_VERSION_FLOAT 1.7f
 #define MODULE_AUTHOR "Ghost"
 #define MODULE_URL "https://forums.alliedmods.net/showthread.php?t=308229"
 #define MODULE_LOGTAG "CSWM"

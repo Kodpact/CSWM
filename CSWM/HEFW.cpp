@@ -1,5 +1,9 @@
 #include "Module.h"
 
+extern meta_globals_t *META_GLOBALS;
+extern gamedll_funcs_t *META_GAMEDLLFUNCS;
+extern mutil_funcs_t *META_UTILFUNCS;
+
 void HookEntityFW(const char ClassName[], int Offset, void *Function, void *&Forward)
 {
 	edict_t *Edict = CREATE_ENTITY();
@@ -21,8 +25,15 @@ void HookEntityFW(const char ClassName[], int Offset, void *Function, void *&For
 	int **IVTable = (int **)VTable;
 
 	Forward = (void *)IVTable[Offset];
+
+#if defined(_WIN32)
 	DWORD OldFlags;
 	VirtualProtect(&IVTable[Offset], sizeof(int *), PAGE_READWRITE, &OldFlags);
+#else
+	void *Address = (void *)ALIGN(&IVTable[Offset]);
+	mprotect(Address, sysconf(_SC_PAGESIZE), PROT_READ | PROT_WRITE);
+#endif
+
 	IVTable[Offset] = (int *)Function;
 }
 
@@ -30,8 +41,15 @@ void HookEntityFWByVTable(void **VTable, int Offset, void *Function, void *&Forw
 {
 	int **IVTable = (int **)VTable;
 	Forward = (void *)IVTable[Offset];
+
+#if defined(_WIN32)
 	DWORD OldFlags;
 	VirtualProtect(&IVTable[Offset], sizeof(int *), PAGE_READWRITE, &OldFlags);
+#else
+	void *Address = (void *)ALIGN(&IVTable[Offset]);
+	mprotect(Address, sysconf(_SC_PAGESIZE), PROT_READ | PROT_WRITE);
+#endif
+
 	IVTable[Offset] = (int *)Function;
 }
 

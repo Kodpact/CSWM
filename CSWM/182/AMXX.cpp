@@ -2062,8 +2062,8 @@ plugin_info_t PLUGIN_INFO =
 		MODULE_AUTHOR,
 		MODULE_URL,
 		MODULE_LOGTAG,
-		PT_ANYTIME,
-		PT_ANYTIME
+		PT_NEVER,
+		PT_NEVER,
 };
 
 C_DLLEXPORT int GetEntityAPI2(DLL_FUNCTIONS *GameFunctionsPtr, int *InterfaceVersion)
@@ -2215,7 +2215,7 @@ DLLEXPORT int Meta_Query(char *ifvers, plugin_info_t **pPlugInfo, mutil_funcs_t 
 	*pPlugInfo = &PLUGIN_INFO;
 
 	// Check for interface version compatibility.
-	if (!FStrEq(ifvers, PLUGIN_INFO.ifvers)) {
+	if (strcmp(ifvers, PLUGIN_INFO.ifvers)) {
 		int mmajor = 0, mminor = 0, pmajor = 0, pminor = 0;
 		LOG_MESSAGE(PLID, "WARNING: meta-interface version mismatch; requested=%s ours=%s",
 			PLUGIN_INFO.logtag, ifvers);
@@ -2461,7 +2461,7 @@ PFN_GETPLAYERFLAGS			g_fn_GetPlayerFlags;
 PFN_GET_PLAYER_EDICT		g_fn_GetPlayerEdict;
 PFN_FORMAT					g_fn_Format;
 PFN_REGISTERFUNCTION		g_fn_RegisterFunction;
-PFN_REQ_FNPTR				g_fn_RequestFunction;
+PFN_REFNPTR				g_fn_RequestFunction;
 PFN_AMX_PUSH				g_fn_AmxPush;
 PFN_SET_TEAM_INFO			g_fn_SetTeamInfo;
 PFN_PLAYER_PROP_ADDR		g_fn_PlayerPropAddr;
@@ -2514,7 +2514,7 @@ C_DLLEXPORT int AMXX_CheckGame(const char *game)
 	return AMXX_GAME_OK;
 #endif
 }
-C_DLLEXPORT int AMXX_Attach(PFN_REQ_FNPTR reqFnptrFunc)
+C_DLLEXPORT int AMXX_Attach(PFN_REFNPTR reqFnptrFunc)
 {
 	if (!reqFnptrFunc)
 		return AMXX_PARAM;

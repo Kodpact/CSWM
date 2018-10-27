@@ -1,4 +1,9 @@
 #include "Module.h"
+#include <io.h>
+
+#ifndef MAX_PATH
+#define MAX_PATH 260
+#endif
 
 #define DEFINE_CHAR64(Value) char Value[64]
 
@@ -272,7 +277,7 @@ cell AMX_NATIVE_CALL BuildWeaponPrimaryAttack(AMX *Plugin, cell *Params)
 	{
 		Weapon.AnimS.Append(Params[5]);
 
-		for (size_t Index = 5; Index <= Params[0] / sizeof(cell); Index++)
+		for (Index = 5; Index <= Params[0] / (cell)sizeof(cell); Index++)
 			Weapon.AnimS.Append(*GetAMXAddr(Plugin, Params[Index]));
 	}
 	else
@@ -501,12 +506,12 @@ cell AMX_NATIVE_CALL FindWeaponByName(AMX *Plugin, cell *Params)
 
 static cell AMX_NATIVE_CALL GiveWeaponByName(AMX *Plugin, cell *Params)
 {
-	cell PIndex = Params[1];
+	cell Index = Params[1];
 
-	if (PIndex < 0 || PIndex > gpGlobals->maxClients)
+	if (Index < 0 || Index > gpGlobals->maxClients)
 		return FALSE;
 
-	GiveWeaponByName(INDEXENT(PIndex), (char *)MF_GetAmxString(Plugin, Params[1], NULL, NULL));
+	GiveWeaponByName(EDICT_FOR_NUM(Index), (char *)MF_GetAmxString(Plugin, Params[1], NULL, NULL));
 	return TRUE;
 }
 
@@ -521,7 +526,7 @@ static cell AMX_NATIVE_CALL GiveWeaponByID(AMX *Plugin, cell *Params)
 	if (WIndex < 0 || WIndex >= WeaponCount)
 		return FALSE;
 
-	GiveWeapon(INDEXENT(PIndex), WIndex);
+	GiveWeapon(EDICT_FOR_NUM(PIndex), WIndex);
 	return TRUE;
 }
 
@@ -592,7 +597,7 @@ static cell AMX_NATIVE_CALL GetWeaponData(AMX *Plugin, cell *Params)
 		{
 			Size = min(Size, ((List<int> *)Data)->Length);
 
-			for (int Index = 0; Index < Size; Index++)
+			for (Index = 0; Index < Size; Index++)
 			{
 				*(GetAMXAddr(Plugin, Params[3]) + Index) = ((List<int> *)Data)->Data[Index];
 			};
@@ -609,9 +614,9 @@ static cell AMX_NATIVE_CALL SendWeaponAnim(AMX *Plugin, cell *Params)
 	if (!WeaponEdict)
 		return NULL;
 
-	CBasePlayerWeapon *BaseWeapon;
+	CBasePlayerWeapon *BaseWeapon = (CBasePlayerWeapon *)WeaponEdict->pvPrivateData;
 
-	if (!(BaseWeapon = (CBasePlayerWeapon *)WeaponEdict->pvPrivateData))
+	if (!BaseWeapon)
 		return NULL;
 
 	SendWeaponAnim(BaseWeapon, Params[2]);
@@ -759,7 +764,7 @@ static cell AMX_NATIVE_CALL CreateExplosion(AMX *Plugin, cell *Params)
 
 	if (MI_Explosion)
 	{
-		MESSAGE_BEGIN(MSG_BROADCAST, SVC_TEMPENTITY);
+		MESSAGE_BEGIN(MSG_BROADCAST, SVC_TEMPENTITY, NULL, NULL);
 		WRITE_BYTE(TE_EXPLOSION);
 		WRITE_COORD(Origin.x);
 		WRITE_COORD(Origin.y);
@@ -771,7 +776,7 @@ static cell AMX_NATIVE_CALL CreateExplosion(AMX *Plugin, cell *Params)
 		MESSAGE_END();
 	}
 
-	MESSAGE_BEGIN(MSG_BROADCAST, SVC_TEMPENTITY);
+	MESSAGE_BEGIN(MSG_BROADCAST, SVC_TEMPENTITY, NULL, NULL);
 	WRITE_BYTE(TE_WORLDDECAL);
 	WRITE_COORD(Origin.x);
 	WRITE_COORD(Origin.y);
@@ -781,7 +786,7 @@ static cell AMX_NATIVE_CALL CreateExplosion(AMX *Plugin, cell *Params)
 
 	if (MI_Smoke)
 	{
-		MESSAGE_BEGIN(MSG_BROADCAST, SVC_TEMPENTITY);
+		MESSAGE_BEGIN(MSG_BROADCAST, SVC_TEMPENTITY, NULL, NULL);
 		WRITE_BYTE(TE_SMOKE);
 		WRITE_COORD(Origin.x);
 		WRITE_COORD(Origin.y);
@@ -855,7 +860,7 @@ static cell AMX_NATIVE_CALL RadiusDamageEx(AMX *Plugin, cell *Params)
 		if ((TargetEdict == OwnerEdict) && (Flags & RDFlag::NoSelfDamage))
 			continue;
 
-		Result = BaseEntity->TakeDamage(InflictorVars, AttackerVars, (TargetEdict == OwnerEdict ? 0.4 : 1.0) * ((Damage * Radius) / (TargetOrigin - Origin).Length()), DMG_EXPLOSION);
+		Result = BaseEntity->TakeDamage(InflictorVars, AttackerVars, (TargetEdict == OwnerEdict ? 0.4f : 1.0f) * ((Damage * Radius) / (TargetOrigin - Origin).Length()), DMG_EXPLOSION);
 
 		if (Result & (Flags & RDFlag::Knockback) && BaseEntity->IsPlayer())
 			PlayerKnockback(TargetEdict, Origin, RANDOM_FLOAT(120.0f, 150.0f));
@@ -980,7 +985,7 @@ cell AMX_NATIVE_CALL GetWeaponPath(AMX *Plugin, cell *Params)
 cell AMX_NATIVE_CALL GetDefaultPath(AMX *Plugin, cell *Params)
 {
 	char Path[64];
-	Q_sprintf(Path, "models/%s", PathAddon);
+	sprintf(Path, "models/%s", PathAddon);
 	MF_SetAmxString(Plugin, Params[1], Path, Params[2]);
 	return NULL;
 }
@@ -1187,7 +1192,7 @@ static cell AMX_NATIVE_CALL GainWeaponClip(AMX *Plugin, cell *Params)
 
 static cell AMX_NATIVE_CALL StatusIconNumber(AMX *Plugin, cell *Params)
 {
-	StatusIconNumber(EDICT_FOR_NUM(Params[1]), Params[2], Params[3]);
+	StatusIconNumber(EDICT_FOR_NUM(Params[1]), Params[2], (char)Params[3]);
 	return NULL;
 }
 
@@ -1428,7 +1433,7 @@ void ReadWeaponAttack2(CWeapon &Weapon, char *ValuePack)
 	while (Value)
 	{
 		int IValue = atoi(Value);
-		float FValue = atof(Value);
+		float FValue = (float)atof(Value);
 
 		switch (Weapon.A2I)
 		{
@@ -1691,8 +1696,8 @@ void LoadWeapons(void)
 
 				switch (Param->Type)
 				{
-					case TYPE_INT: *(WeaponP + Param->Offset) = atoi(Value); break;
-					case TYPE_FLOAT: *(float *)(WeaponP + Param->Offset) = atof(Value); break;
+					case TYPE_INT: *(int *)(WeaponP + Param->Offset) = atoi(Value); break;
+					case TYPE_FLOAT: *(float *)(WeaponP + Param->Offset) = (float)atof(Value); break;
 					case TYPE_STRING:{ *(const char **)(WeaponP + Param->Offset) = STRING(ALLOC_STRING(Value)); break; }
 					case TYPE_ARRAY: ReadWeaponArray((List<int> *)(WeaponP + Param->Offset, Value), Value); break;
 					case TYPE_STRINT: *(string_t *)(WeaponP + Param->Offset) = ALLOC_STRING(Value); break;

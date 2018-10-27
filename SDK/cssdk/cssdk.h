@@ -1,0 +1,80 @@
+#ifndef INCLUDE_CSSDK_H
+#define INCLUDE_CSSDK_H
+
+#define INTERFACE_VERSION 140
+#define ENGINE_INTERFACE_VERSION 138
+
+#define ENGINEFUNCS g_engfuncs
+#define GLOBALVARS gpGlobals
+
+#include "basetypes.h"
+#include "vector.h"
+#include "minimath.h"
+#include "link.h"
+#include "entvars.h"
+#include "edict.h"
+#include "archtypes.h"
+#include "levellist.h"
+#include "alerttype.h"
+#include "cdstatus.h"
+#include "cvar.h"
+#include "entitytable.h"
+#include "fieldtypes.h"
+#include "material.h"
+#include "forcetype.h"
+#include "globalvars.h"
+#include "keyvaluedata.h"
+#include "newdllfunctions.h"
+#include "printtype.h"
+#include "saverestore.h"
+#include "traceresult.h"
+#include "typedescription.h"
+#include "plane.h"
+#include "trace.h"
+#include "flags.h"
+#include "colordef.h"
+#include "buttons.h"
+#include "locksound.h"
+#include "togglestate.h"
+#include "crc.h"
+#include "const.h"
+#include "krender.h"
+#include "message.h"
+#include "tempent.h"
+#include "monsterevent.h"
+#include "cldll.h"
+#include "weapondata.h"
+#include "entitystate.h"
+#include "clientdata.h"
+#include "localstate.h"
+#include "clienttextmessage.h"
+#include "sequencecommandline.h"
+#include "sequenceentry.h"
+#include "sentenceentry.h"
+#include "resourcetype.h"
+#include "resource.h"
+#include "customization.h"
+#include "hudtextparms.h"
+#include "enginecallback.h"
+#include "util.h"
+#include "eventflags.h"
+#include "enginefuncs.h"
+
+extern enginefuncs_t ENGINEFUNCS;
+extern globalvars_t *GLOBALVARS;
+
+#include "dllfunctions.h"
+#include "weapontype.h"
+#include "activity.h"
+#include "usetype.h"
+#include "cbase.h"
+#include "unisignals.h"
+#include "utlmemory.h"
+#include "utlvector.h"
+#include "hintmessage.h"
+#include "basemonster.h"
+#include "weapons.h"
+#include "player.h"
+#include "studio.h"
+
+#endif

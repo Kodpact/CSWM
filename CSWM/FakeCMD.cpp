@@ -1,4 +1,6 @@
-#include <Module.h>
+#include "Module.h"
+
+#pragma warning (disable : 4459)
 
 char ArgS[256];
 const char *ArgV[3];
