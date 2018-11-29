@@ -1,9 +1,3 @@
-/*
- * AMX Mod X Module Interface Functions
- * This file may be freely used
-*/
-
-// prevent double include
 #ifndef __AMXXMODULE_H__
 #define __AMXXMODULE_H__
 
@@ -11,14 +5,14 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <Windows.h>
+
+#include "OSDep.h"
 
 #include "cssdk.h"
 #include "metamod.h"
 
-#include "../18X/Config.h"
+#include "18X/Config.h"
 
-// DLL Export
 #undef DLLEXPORT
 #if defined(_WIN32)
 #define DLLEXPORT __declspec(dllexport)
@@ -2053,7 +2047,7 @@ void FN_AMXX_PLUGINSUNLOADED(void);
 #endif // FN_AMXX_PLUGINSUNLOADED
 
 // *** Types ***
-typedef void* (*PFN_REFNPTR)(const char * /*name*/);
+typedef void* (*PFN_REQ_FNPTR)(const char * /*name*/);
 
 // ***** Module funcs stuff *****
 enum ForwardExecType
@@ -2262,7 +2256,7 @@ extern PFN_GET_PLAYER_EDICT			g_fn_GetPlayerEdict;
 extern PFN_FORMAT					g_fn_Format;
 extern PFN_GET_PLAYER_TEAM			g_fn_GetPlayerTeam;
 extern PFN_REGISTERFUNCTION			g_fn_RegisterFunction;
-extern PFN_REFNPTR				g_fn_RequestFunction;
+extern PFN_REQ_FNPTR				g_fn_RequestFunction;
 extern PFN_AMX_PUSH					g_fn_AmxPush;
 extern PFN_SET_TEAM_INFO			g_fn_SetTeamInfo;
 extern PFN_PLAYER_PROP_ADDR			g_fn_PlayerPropAddr;

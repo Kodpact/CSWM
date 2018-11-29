@@ -4,7 +4,6 @@
 typedef enum Activity_s
 {
 	ACT_INVALID = -1,
-
 	ACT_RESET = 0,			// Set m_Activity to this invalid value to force a reset to m_IdealActivity
 	ACT_IDLE,
 	ACT_GUARD,
@@ -106,7 +105,6 @@ typedef enum Activity_s
 	ACT_WAVE,
 	ACT_YES,
 	ACT_NO,
-
 } Activity;
 
 typedef struct

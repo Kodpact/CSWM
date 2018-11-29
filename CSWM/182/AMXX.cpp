@@ -2062,7 +2062,7 @@ plugin_info_t PLUGIN_INFO =
 		MODULE_AUTHOR,
 		MODULE_URL,
 		MODULE_LOGTAG,
-		PT_NEVER,
+		PT_STARTUP,
 		PT_NEVER,
 };
 
@@ -2197,7 +2197,7 @@ static META_FUNCTIONS g_MetaFunctions_Table =
 	GetEngineFunctions_Post
 };
 
-DLLEXPORT int Meta_Query(char *ifvers, plugin_info_t **pPlugInfo, mutil_funcs_t *pMetaUtilFuncs)
+C_DLLEXPORT int Meta_Query(char *ifvers, plugin_info_t **pPlugInfo, mutil_funcs_t *pMetaUtilFuncs)
 {
 	if ((int)CVAR_GET_FLOAT("developer") != 0)
 	{
@@ -2461,7 +2461,7 @@ PFN_GETPLAYERFLAGS			g_fn_GetPlayerFlags;
 PFN_GET_PLAYER_EDICT		g_fn_GetPlayerEdict;
 PFN_FORMAT					g_fn_Format;
 PFN_REGISTERFUNCTION		g_fn_RegisterFunction;
-PFN_REFNPTR				g_fn_RequestFunction;
+PFN_REQ_FNPTR				g_fn_RequestFunction;
 PFN_AMX_PUSH				g_fn_AmxPush;
 PFN_SET_TEAM_INFO			g_fn_SetTeamInfo;
 PFN_PLAYER_PROP_ADDR		g_fn_PlayerPropAddr;
@@ -2514,7 +2514,7 @@ C_DLLEXPORT int AMXX_CheckGame(const char *game)
 	return AMXX_GAME_OK;
 #endif
 }
-C_DLLEXPORT int AMXX_Attach(PFN_REFNPTR reqFnptrFunc)
+C_DLLEXPORT int AMXX_Attach(PFN_REQ_FNPTR reqFnptrFunc)
 {
 	if (!reqFnptrFunc)
 		return AMXX_PARAM;

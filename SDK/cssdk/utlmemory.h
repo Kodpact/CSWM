@@ -92,7 +92,9 @@ template< class T >
 CUtlMemory<T>::CUtlMemory(int nGrowSize, int nInitAllocationCount) : m_pMemory(0),
 m_nAllocationCount(nInitAllocationCount), m_nGrowSize(nGrowSize)
 {
-	Assert((nGrowSize >= 0) && (nGrowSize != EXTERNAL_BUFFER_MARKER));
+	if (nGrowSize < 0 || nGrowSize == EXTERNAL_BUFFER_MARKER)
+		return;
+	
 	if (m_nAllocationCount)
 	{
 		m_pMemory = (T*)malloc(m_nAllocationCount * sizeof(T));
@@ -137,28 +139,24 @@ void CUtlMemory<T>::SetExternalBuffer(T* pMemory, int numElements)
 template< class T >
 inline T& CUtlMemory<T>::operator[](int i)
 {
-	Assert(IsIdxValid(i));
 	return m_pMemory[i];
 }
 
 template< class T >
 inline T const& CUtlMemory<T>::operator[](int i) const
 {
-	Assert(IsIdxValid(i));
 	return m_pMemory[i];
 }
 
 template< class T >
 inline T& CUtlMemory<T>::Element(int i)
 {
-	Assert(IsIdxValid(i));
 	return m_pMemory[i];
 }
 
 template< class T >
 inline T const& CUtlMemory<T>::Element(int i) const
 {
-	Assert(IsIdxValid(i));
 	return m_pMemory[i];
 }
 
@@ -176,7 +174,6 @@ bool CUtlMemory<T>::IsExternallyAllocated() const
 template< class T >
 void CUtlMemory<T>::SetGrowSize(int nSize)
 {
-	Assert((nSize >= 0) && (nSize != EXTERNAL_BUFFER_MARKER));
 	m_nGrowSize = nSize;
 }
 
@@ -229,12 +226,9 @@ inline bool CUtlMemory<T>::IsIdxValid(int i) const
 template< class T >
 void CUtlMemory<T>::Grow(int num)
 {
-	Assert(num > 0);
-
 	if (IsExternallyAllocated())
 	{
 		// Can't grow a buffer whose memory was externally allocated 
-		Assert(0);
 		return;
 	}
 
@@ -258,7 +252,6 @@ void CUtlMemory<T>::Grow(int num)
 		{
 			// Compute an allocation which is at least as big as a cache line...
 			m_nAllocationCount = (31 + sizeof(T)) / sizeof(T);
-			Assert(m_nAllocationCount != 0);
 		}
 	}
 
@@ -285,7 +278,6 @@ inline void CUtlMemory<T>::EnsureCapacity(int num)
 	if (IsExternallyAllocated())
 	{
 		// Can't grow a buffer whose memory was externally allocated 
-		Assert(0);
 		return;
 	}
 

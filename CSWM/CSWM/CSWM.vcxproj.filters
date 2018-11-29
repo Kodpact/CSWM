@@ -26,11 +26,14 @@
     <ClInclude Include="..\CSWM.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\Attack2.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\182\AMXX.h">
       <Filter>18X\AMXX</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CStrike.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -49,5 +52,8 @@
     <ClCompile Include="..\182\AMXX.cpp">
       <Filter>18X\AMXX</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Resource.rc" />
   </ItemGroup>
 </Project>

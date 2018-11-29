@@ -242,7 +242,7 @@ enum AmmoType
 	AMMO_SMOKEGRENADE,
 	AMMO_C4,
 
-	AMMO_MAX_TYPES
+	AMMO_MAX_TYPES,
 };
 
 enum WeaponClassType

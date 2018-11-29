@@ -180,8 +180,8 @@
 #define GROUP_OP_NAND		1
 
 // Use this instead of ALLOC_STRING on constant strings
-#define STRING(offset)		((const char *)(gpGlobals->pStringBase + (unsigned int)(offset)))
-#define MAKE_STRING(str)	((uint64)(str) - (uint64)(STRING(0)))
+#define STRING(offset)		(const char *)((const char *)gpGlobals->pStringBase + (int)(offset))
+#define MAKE_STRING(str)	((intptr_t)(str) - (intptr_t)(STRING(0)))
 
 // Dot products for view cone checking
 #define VIEW_FIELD_FULL		-1.0		// +-180 degrees

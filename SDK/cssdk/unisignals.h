@@ -9,15 +9,13 @@ public:
 		m_flSignal = 0;
 		m_flState = 0;
 	}
+
 public:
-	void Update()
-	{
-		m_flState = m_flSignal;
-		m_flSignal = 0;
-	}
-	void Signal(int flags) { m_flSignal |= flags; }
-	int GetSignal() const { return m_flSignal; }
-	int GetState() const { return m_flState; }
+	inline void Update() { m_flState = m_flSignal; m_flSignal = 0; }
+	inline void Signal(int flags) { m_flSignal |= flags; }
+	inline int GetSignal() const { return m_flSignal; }
+	inline int GetState() const { return m_flState; }
+
 public:
 	int m_flSignal;
 	int m_flState;

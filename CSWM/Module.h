@@ -1,9 +1,7 @@
 #pragma once
 #include <stdio.h>
-#include <stdlib.h>
-#include <stddef.h>
-#include <stdint.h>
-#include <Windows.h>
+
+#include "OSDep.h"
 
 #include "18X/Config.h"
 #include "182/AMXX.h"
@@ -11,7 +9,6 @@
 #include "cssdk.h"
 #include "metamod.h"
 
-#include "Attack2.h"
 #include "CSWM.h"
 #include "CStrike.h"
 #include "HEFW.h"
