@@ -2,7 +2,7 @@
 
 // Module info
 #define MODULE_NAME "CSWM"
-#define MODULE_VERSION "1.7"
+#define MODULE_VERSION "1.7.1"
 #define MODULE_AUTHOR "Ghost"
 #define MODULE_URL "https://forums.alliedmods.net/showthread.php?t=308229"
 #define MODULE_LOGTAG "CSWM"
@@ -178,7 +178,7 @@
 // #define FN_PM_FindTextureType_Post			PM_FindTextureType_Post
 // #define FN_SetupVisibility_Post				SetupVisibility_Post
 #define FN_UpdateClientData_Post				UpdateClientData_Post
-// #define FN_AddToFullPack_Post				AddToFullPack_Post
+// #define FN_AddToFullPack_Post					AddToFullPack_Post
 // #define FN_CreateBaseline_Post				CreateBaseline_Post
 // #define FN_RegisterEncoders_Post				RegisterEncoders_Post
 // #define FN_GetWeaponData_Post				GetWeaponData_Post
@@ -317,7 +317,7 @@
 #define FN_PlaybackEvent						PlaybackEvent
 // #define FN_SetFatPVS							SetFatPVS
 // #define FN_SetFatPAS							SetFatPAS
-// #define FN_CheckVisibility					CheckVisibility
+// #define FN_CheckVisibility						CheckVisibility
 // #define FN_DeltaSetField						DeltaSetField
 // #define FN_DeltaUnsetField					DeltaUnsetField
 // #define FN_DeltaAddEncoder					DeltaAddEncoder

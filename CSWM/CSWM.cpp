@@ -12,8 +12,10 @@ List<CWeapon> Weapons;
 List<CAmmo> Ammos;
 List<CProjectile> Projectiles;
 List<CEffect> Effects;
+List<int> TakeDamageFWs;
 
 StringHashMap AnimHashMap;
+StringHashMap WeaponListMap;
 
 BOOL Activated = FALSE;
 BOOL Initialized = FALSE;
@@ -35,7 +37,7 @@ void *FWeapon_ExtractAmmo[MAX_WEAPON_TYPES];
 void *FWeapon_SendWeaponAnim[MAX_WEAPON_TYPES];
 void *FWeapon_PlayEmptySound;
 void *FWeapon_ResetEmptySound;
-void *FPlayer_TakeDamage, *FPlayerBot_TakeDamage, *FEntity_TakeDamage;
+void *FPlayer_TakeDamage, *FPlayerBot_TakeDamage;
 void *FPlayer_GiveAmmo;
 void *FTraceAttackEntity;
 void *FTraceAttackPlayer;
@@ -107,10 +109,10 @@ cvar_t CVar_Version = { "cswm_version", MODULE_VERSION, FCVAR_ARCHIVE | FCVAR_SE
 cvar_t CVar_Log = { "cswm_log", "0", FCVAR_ARCHIVE | FCVAR_SERVER, 0.0f, NULL };
 cvar_t CVar_AMap = { "cswm_animmap", "1", FCVAR_ARCHIVE | FCVAR_SERVER, 0.0f, NULL };
 cvar_t CVar_SmokePuff = { "cswm_smokepuff", "0", FCVAR_ARCHIVE | FCVAR_SERVER, 0.0f, NULL };
-cvar_t *CVar_LogPointer;
-cvar_t *CVar_AMapPointer;
-cvar_t *CVar_SmokePuffPointer;
-cvar_t *CVar_CheatsPointer;
+float *CVar_LogPointer;
+float *CVar_AMapPointer;
+float *CVar_SmokePuffPointer;
+float *CVar_CheatsPointer;
 
 void GameDLLInit_Post(void)
 {
@@ -121,10 +123,10 @@ void GameDLLInit_Post(void)
 	CVAR_REGISTER(&CVar_AMap);
 	CVAR_REGISTER(&CVar_SmokePuff);
 
-	CVar_LogPointer = CVAR_GET_POINTER("cswm_log");
-	CVar_AMapPointer = CVAR_GET_POINTER("cswm_amap");
-	CVar_SmokePuffPointer = CVAR_GET_POINTER("cswm_smokepuff");
-	CVar_CheatsPointer = CVAR_GET_POINTER("sv_cheats");
+	CVar_LogPointer = &CVAR_GET_POINTER("cswm_log")->value;
+	CVar_AMapPointer = &CVAR_GET_POINTER("cswm_animmap")->value;
+	CVar_SmokePuffPointer = &CVAR_GET_POINTER("cswm_smokepuff")->value;
+	CVar_CheatsPointer = &CVAR_GET_POINTER("sv_cheats")->value;
 }
 
 static void __FC Weapon_SpawnPistol(CBasePlayerWeapon *BaseWeapon)
@@ -171,12 +173,19 @@ static DECLFUNC_OS(BOOL, Weapon_AddToPlayer, CBasePlayerWeapon *BaseWeapon, CBas
 
 static BOOL __FC Weapon_Deploy(CBasePlayerWeapon *BaseWeapon)
 {
-	((FN_WEAPON_DEPLOY)FWeapon_Deploy[WEAPON_FID(BaseWeapon)])(BaseWeapon);
-
 	if (!CUSTOM_WEAPON(BaseWeapon))
-		return TRUE;
-
+		return ((FN_WEAPON_DEPLOY)FWeapon_Deploy[WEAPON_FID(BaseWeapon)])(BaseWeapon);
+	
 	CWeapon &Weapon = Weapons[WEAPON_KEY(BaseWeapon)];
+	
+	if (Weapon.Forwards[WForward::DeployPre])
+		MF_ExecuteForward(Weapon.Forwards[WForward::DeployPre], EDI_FROM_PD(BaseWeapon));
+	
+	((FN_WEAPON_DEPLOY)FWeapon_Deploy[WEAPON_FID(BaseWeapon)])(BaseWeapon);
+	
+	if (Weapon.Forwards[WForward::DeployPrePost])
+		MF_ExecuteForward(Weapon.Forwards[WForward::DeployPrePost], EDI_FROM_PD(BaseWeapon));
+
 	CBasePlayer *BasePlayer = GetPrivateData(CBasePlayer *, BaseWeapon, CBasePlayerItem_Player, 4);
 	entvars_t *PlayerEntVars = EV_FROM_PD(BasePlayer);
 	PlayerEntVars->viewmodel = Weapon.VModel;
@@ -257,23 +266,22 @@ static void __FC Weapon_PrimaryAttack(CBasePlayerWeapon *BaseWeapon)
 
 	Vector PunchAngle = PlayerEntVars->punchangle;
 	VectorSub(PunchAngle, PunchAngleOld, PunchAngle);
-
 	float Delay, Recoil;
 	int Anim = 0;
 
 	switch (A2I)
 	{
-		default:
-		{
-			Delay = Weapon.Delay;
-			Recoil = Weapon.Recoil;
-			break;
-		}
 		case A2_Switch:
 		{
 			Delay = GetAttack2Data(float, Weapon.A2V, WA2_SWITCH_DELAY);
 			Anim = GetAttack2Data(int, Weapon.A2V, WA2_SWITCH_ANIM_SHOOT);
 			Recoil = GetAttack2Data(float, Weapon.A2V, WA2_SWITCH_RECOIL);
+			break;
+		}
+		case A2_Burst:
+		{
+			Delay = 0.5f;
+			Recoil = Weapon.Recoil;
 			break;
 		}
 		case A2_AutoPistol:
@@ -283,23 +291,18 @@ static void __FC Weapon_PrimaryAttack(CBasePlayerWeapon *BaseWeapon)
 			Recoil = GetAttack2Data(float, Weapon.A2V, WA2_AUTOPISTOL_RECOIL);
 			break;
 		}
-		case A2_Burst:
-		{
-			Delay = 0.5f;
-			Recoil = Weapon.Recoil;
-			break;
-		}
-		case A2_MultiShot:
-		{
-			Delay = Weapon.Delay;
-			Recoil = Weapon.Recoil * 1.5f;
-			break;
-		}
 		case A2_InstaSwitch:
 		{
 			Delay = GetAttack2Data(float, Weapon.A2V, WA2_INSTASWITCH_DELAY);
 			Anim = GetAttack2Data(int, Weapon.A2V, WA2_INSTASWITCH_ANIM_SHOOT);
 			Recoil = GetAttack2Data(float, Weapon.A2V, WA2_INSTASWITCH_RECOIL);
+			break;
+		}
+		default:
+		{
+			Delay = Weapon.Delay;
+			Recoil = Weapon.Recoil;
+			break;
 		}
 	}
 
@@ -331,20 +334,19 @@ static void __FC Weapon_PrimaryAttack(CBasePlayerWeapon *BaseWeapon)
 				break;
 
 			GetPrivateData(float, BaseWeapon, CBasePlayerWeapon_LastFire, 4) = gpGlobals->time;
-
 			WEAPON_INBURST(BaseWeapon) = TRUE;
 			WEAPON_CURBURST(BaseWeapon) = WEAPON_A2_OFFSET(BaseWeapon);
 			break;
 		}
 		case A2_AutoPistol:
 		{
-			if (InAttack2)
+			if (InAttack2 && !(Weapon.Flags & AutoPistol_NoSceenShake))
 				ScreenShake(ED_FROM_PD(BasePlayer), 4, 3, 7);
 
 			break;
 		}
 	}
-
+	
 	if (Weapon.Forwards[WForward::PrimaryAttackPost])
 		MF_ExecuteForward(Weapon.Forwards[WForward::PrimaryAttackPost], EDI_FROM_PD(BaseWeapon));
 
@@ -365,7 +367,10 @@ static void __FC Weapon_Reload(CBasePlayerWeapon *BaseWeapon)
 
 	CWeapon &Weapon = Weapons[WEAPON_KEY(BaseWeapon)];
 
-	if (CUSTOM_WEAPON(BaseWeapon) && Weapon.Forwards[WForward::ReloadPre] && MF_ExecuteForward(Weapon.Forwards[WForward::ReloadPre], EDI_FROM_PD(BaseWeapon)) > WReturn::IGNORED)
+	if (Weapon.Flags & WFlag::DisableReload)
+		return;
+
+	if (Weapon.Forwards[WForward::ReloadPre] && MF_ExecuteForward(Weapon.Forwards[WForward::ReloadPre], EDI_FROM_PD(BaseWeapon)) > WReturn::IGNORED)
 		return;
 
 	BOOL RifleStyle = Weapon.Type == WType::Shotgun && Weapon.AnimR >= WShotgunReloadType::RifleStyle;
@@ -377,7 +382,9 @@ static void __FC Weapon_Reload(CBasePlayerWeapon *BaseWeapon)
 
 	BOOL SwitchON = (Weapon.A2I == A2_Switch && WEAPON_INA2(BaseWeapon));
 
-	GetPrivateData(int, BasePlayer, CBasePlayer_FOV, 5) = CS_NO_ZOOM;
+	if (!(Weapon.Flags & WFlag::ReloadKeepFOV))
+		GetPrivateData(int, BasePlayer, CBasePlayer_FOV, 5) = CS_NO_ZOOM;
+
 	GetPrivateData(float, BaseWeapon, CBasePlayerWeapon_NextSecondaryAttack, 4)
 		= GetPrivateData(float, BaseWeapon, CBasePlayerWeapon_NextPrimaryAttack, 4)
 		= GetPrivateData(float, BasePlayer, CBaseMonster_NextAttack, 5)
@@ -414,7 +421,7 @@ int GetPlayerSequence(CBasePlayer *BasePlayer, const char *AnimExtension)
 {
 	int Result;
 
-	if (CVar_AMapPointer->value)
+	if (*CVar_AMapPointer)
 	{
 		if (!AnimHashMap.Retrieve(AnimExtension, &Result))
 			Result = 0;
@@ -434,6 +441,9 @@ static void __FC Weapon_ReloadShotgun(CBasePlayerWeapon *BaseWeapon)
 	else
 	{
 		CWeapon &Weapon = Weapons[WEAPON_KEY(BaseWeapon)];
+
+		if (Weapon.Flags & WFlag::DisableReload)
+			return;
 
 		if (Weapon.AnimR >= WShotgunReloadType::RifleStyle)
 			return Weapon_Reload(BaseWeapon);
@@ -744,25 +754,28 @@ static DECLFUNC_OS(BOOL, Player_TakeDamage, CBasePlayer *BasePlayer, entvars_t *
 	if (!InvalidEntity(PlayerEdict) && Attacker->flags & FL_CLIENT)
 		BaseItem = ((DamageBits == DMG_EXPLOSION) && Inflictor->euser1) ?
 		(CBasePlayerItem *)Inflictor->euser1->pvPrivateData : GetPrivateData(CBasePlayerItem *, PlayerEdict->pvPrivateData, CBasePlayer_ActiveItem, 5);
-
+	
 	if (BaseItem && CUSTOM_WEAPON(BaseItem) && ((DamageBits & DMG_BULLET) | (DamageBits & DMG_EXPLOSION)))
 	{
-		Weapon = &Weapons[WEAPON_KEY(BaseItem)];
-
-		if (DamageBits == DMG_BULLET)
+		Weapon = &Weapons[WEAPON_KEY(BaseItem)];	
+		
+		if (DamageBits & DMG_BULLET && !(DamageBits & DMG_CUSTOM))
 			Damage *= (Weapon->A2I == A2_Switch && WEAPON_INA2(BaseItem)) ? GetAttack2Data(float, Weapon->A2V, WA2_SWITCH_DAMAGE) : Weapon->Damage;
 	}
-
+	
 	/* Use Bot TakeDamage To Cause Hurt Voices & Other!? */
 	Result = CALLFUNC_GAME(FN_TAKEDAMAGE, (CBaseEntity *)(EV_FROM_PD(BasePlayer)->flags & FL_FAKECLIENT ? FPlayerBot_TakeDamage : FPlayer_TakeDamage),
 		(CBaseEntity *)BasePlayer, Inflictor, Attacker, Damage, DamageBits);
-
+	
 	if (Weapon)
 	{
 		if (Weapon->Forwards[WForward::DamagePost])
 			MF_ExecuteForward(Weapon->Forwards[WForward::DamagePost], EDI_FROM_PD(BaseItem), Damage, EDI_FROM_PD(BasePlayer));
 	}
-
+	
+	for (int Index = 0; Index < TakeDamageFWs.Length; Index++)
+		MF_ExecuteForward(TakeDamageFWs[Index], EDI_FROM_PD(BasePlayer), NUM_FOR_EDICT(ENT(Inflictor)), NUM_FOR_EDICT(ENT(Attacker)), Damage, DamageBits);
+	
 	return Result;
 }
 
@@ -770,7 +783,12 @@ static int GetAmmoByName(const char *Name)
 {
 	for (int Index = 1; Index < AmmoCount; Index++)
 	{
-		if (!stricmp(Name, Ammos[Index].Name))
+		CAmmo &Ammo = Ammos[Index];
+
+		if (!Ammo.Name)
+			continue;
+
+		if (!stricmp(Name, Ammo.Name))
 			return Index;
 	}
 
@@ -888,7 +906,7 @@ static void TraceAttackContinue(CBaseEntity *BaseEntity, entvars_t *AttackerVars
 		}
 	}
 
-	if (CVar_SmokePuffPointer->value && !(WEAPON_FLAGS(BaseWeapon) & WFlag::NoSmoke) && MI_SmokePuff)
+	if (*CVar_SmokePuffPointer && !(WEAPON_FLAGS(BaseWeapon) & WFlag::NoSmoke) && MI_SmokePuff)
 	{
 		MESSAGE_BEGIN(MSG_PAS, SVC_TEMPENTITY, TResult->vecEndPos, NULL);
 		WRITE_BYTE(TE_EXPLOSION);
@@ -942,10 +960,10 @@ static void __FC EffectThink(CBaseEntity *BaseEntity)
 	}
 }
 
-void GiveWeaponByName(edict_t *PlayerEdict, const char *Name)
+edict_t *GiveWeaponByName(edict_t *PlayerEdict, const char *Name)
 {
 	if (!Name[0] || IS_USER_DEAD(PlayerEdict))
-		return;
+		return NULL;
 
 	BOOL NoError = FALSE;
 	int Index;
@@ -962,19 +980,26 @@ void GiveWeaponByName(edict_t *PlayerEdict, const char *Name)
 	if (!NoError)
 	{
 		CLIENT_PRINTF(PlayerEdict, print_console, "Invalid weapon name.\n");
-		return;
+		return NULL;
 	}
 
-	GiveWeapon(PlayerEdict, Index);
+	return GiveWeapon(PlayerEdict, Index);
 }
 
-void GiveWeapon(edict_t *PlayerEdict, int Index)
+edict_t *GiveWeapon(edict_t *PlayerEdict, int Index)
 {
 	if (IS_USER_DEAD(PlayerEdict))
-		return;
+		return NULL;
 
 	CWeapon &Weapon = Weapons[Index];
 	edict_t *WeaponEdict = CREATE_NAMED_ENTITY(MAKE_STRING(WEAPON_CLASS[WEAPON_TYPE_ID[Weapon.Type]]));
+	
+	if (!WeaponEdict)
+		return NULL;
+
+	if (Weapon.Forwards[WForward::SpawnPre])
+		MF_ExecuteForward(Weapon.Forwards[WForward::SpawnPre], NUM_FOR_EDICT(WeaponEdict));
+
 	WeaponEdict->v.spawnflags |= SF_NORESPAWN;
 	CBasePlayer *BasePlayer = (CBasePlayer *)(PlayerEdict->pvPrivateData);
 	CBasePlayerWeapon *BaseWeapon = (CBasePlayerWeapon *)(WeaponEdict->pvPrivateData);
@@ -1008,6 +1033,8 @@ void GiveWeapon(edict_t *PlayerEdict, int Index)
 
 	if (Weapon.Forwards[WForward::SpawnPost])
 		MF_ExecuteForward(Weapon.Forwards[WForward::SpawnPost], NUM_FOR_EDICT(WeaponEdict));
+
+	return WeaponEdict;
 }
 
 void PlaybackEvent(int Flags, const edict_t *Invoker, unsigned short EI, float Delay, float *Origin, float *Angles, float F1, float F2, int I1, int I2, int B1, int B2)
@@ -1114,31 +1141,28 @@ void ClientCommand(edict_t *PlayerEdict)
 		RETURN_META(MRES_IGNORED);
 
 	SET_META_RESULT(MRES_SUPERCEDE);
-
 	const char *Command = CMD_ARGV(0);
-
+	int Result;
+	
 	if (!stricmp(Command, "give"))
 	{
-		if (CVar_CheatsPointer->value)
-			return GiveWeaponByName(PlayerEdict, CMD_ARGV(1));
+		if (*CVar_CheatsPointer)
+		{
+			if (CMD_ARGC() < 2)
+				return ClientPrint(PlayerEdict, print_console, "Missing argument (Weapon's name).\n");
+
+			return (void)GiveWeaponByName(PlayerEdict, CMD_ARGV(1));
+		}
 		else
 			return ClientPrint(PlayerEdict, print_console, "Give command is disabled until cheats are enabled.\n");
-	}
-	else if (!strncmp(Command, "weapon_", 7))
-	{
-		for (int Index = 0; Index < WeaponCount; Index++)
-		{
-			CWeapon &Weapon = Weapons[Index];
-
-			if (!strcmp(&Command[7], Weapon.Model))
-				return UTIL_FakeClientCommand(PlayerEdict, WEAPON_CLASS[WEAPON_TYPE_ID[Weapon.Type]]);
-		}
 	}
 	else if (!stricmp(Command, "buyammo1"))
 		return BuyAmmo(PlayerEdict, PRIMARY_WEAPON_SLOT);
 	else if (!stricmp(Command, "buyammo2"))
 		return BuyAmmo(PlayerEdict, PISTOL_SLOT);
-
+	else if (WeaponListMap.Retrieve(Command, &Result))
+		return UTIL_FakeClientCommand(PlayerEdict, WEAPON_CLASS[Result]);
+	
 	SET_META_RESULT(MRES_IGNORED);
 }
 
@@ -1266,22 +1290,18 @@ static void PerformDamage(edict_t *PlayerEdict, float Radius, float Damage, CBas
 				continue;
 		}
 
-		Result = CALLFUNC_GAME(FN_TAKEDAMAGE, FEntity_TakeDamage, BaseEntity, PlayerEntVars, PlayerEntVars, Damage, DMG_SLASH);
+		Result = CALLFUNC_GAME(FN_TAKEDAMAGE, (*(void ***)BaseEntity)[EO_TakeDamage], BaseEntity, PlayerEntVars, PlayerEntVars, Damage, DMG_SLASH | DMG_CUSTOM);
 
 		if (Result && EntityVars->flags & FL_CLIENT && (WEAPON_FLAGS(BaseWeapon) & WFlag::KnifeAttack_Knockback))
 			PlayerKnockback(TargetEdict, MyOrigin);
 	}
 }
 
-/* ===================================================== */
-/* =================== ATTACK 2 ======================== */
-/* ===================================================== */
-
 static void Attack2_Zoom(CBasePlayer *BasePlayer, CBasePlayerWeapon *BaseWeapon, CWeapon &Weapon)
 {
 	int &FOV = GetPrivateData(int, BasePlayer, CBasePlayer_FOV, 5);
 
-	switch (GetAttack2Data(int, Weapon.A2I, WA2_ZOOM_MODE))
+	switch (GetAttack2Data(int, Weapon.A2V, WA2_ZOOM_MODE))
 	{
 		case Zoom_Rifle:
 		{
@@ -1396,7 +1416,7 @@ static void Attack2_MultiShot(CBasePlayerWeapon *BaseWeapon, CWeapon &Weapon)
 	for (int Index = 0; Index < WEAPON_A2_OFFSET(BaseWeapon); Index++)
 	{
 		if (WEAPON_CLIP(BaseWeapon) > 0)
-			((FN_WEAPON_PRIMARYATTACK)FWeapon_PrimaryAttack[Weapon.Type])(BaseWeapon);
+			Weapon_PrimaryAttack(BaseWeapon);
 	}
 
 	GetPrivateData(int, BaseWeapon, CBasePlayerWeapon_ShotsFired, 4) = TRUE;
@@ -1488,10 +1508,7 @@ cell ShootProjectileTimed(edict_t *LauncherEdict, int ProjectileID)
 
 	((FN_GRENADE_SPAWN)FGrenade_Spawn)(BaseEntity);
 	GetPrivateData(int, BaseEntity, CGrenade_Team, 4) = GetPrivateData(int, LauncherEdict->pvPrivateData, CBasePlayer_Team, 5);
-	ProjectileEntVars->movetype = MOVETYPE_PUSHSTEP;
-	ProjectileEntVars->solid = SOLID_TRIGGER;
 	SET_MODEL(ProjectileEdict, Projectile->Model);
-	//SET_SIZE(ProjectileEdict, ZVector, ZVector);
 	SET_ORIGIN(ProjectileEdict, LauncherEntVars->origin + LauncherEntVars->view_ofs + gpGlobals->v_forward * 16);
 	ProjectileEntVars->gravity = Projectile->Gravity;
 	ProjectileEntVars->velocity = Velocity;
@@ -1518,10 +1535,7 @@ cell ShootProjectileContact(edict_t *LauncherEdict, int ProjectileID)
 	
 	((FN_GRENADE_SPAWN)FGrenade_Spawn)(BaseEntity);
 	GetPrivateData(int, BaseEntity, CGrenade_Team, 4) = GetPrivateData(int, LauncherEdict->pvPrivateData, CBasePlayer_Team, 5);
-	ProjectileEntVars->movetype = MOVETYPE_PUSHSTEP;
-	ProjectileEntVars->solid = SOLID_TRIGGER;
 	SET_MODEL(ProjectileEdict, Projectile->Model);
-	//SET_SIZE(ProjectileEdict, Vector(0, 0, 0), Vector(0, 0, 0));
 	SET_ORIGIN(ProjectileEdict, LauncherEntVars->origin + LauncherEntVars->view_ofs + gpGlobals->v_forward * 16);
 	ProjectileEntVars->gravity = Projectile->Gravity;
 	ProjectileEntVars->velocity = gpGlobals->v_forward * Projectile->Speed;
@@ -1585,7 +1599,7 @@ void SetClientKeyValue(int Index, char *InfoBuffer, const char *Key, const char 
 
 	if (strcmp(Key, "*bot") != 0 || strcmp(Value, "1") != 0)
 		return;
-
+	
 	SpecialBot_VTable = *((void ***)((char *)PlayerEdict->pvPrivateData));
 	HookEntityFWByVTable(SpecialBot_VTable, EO_TakeDamage, (V *)Player_TakeDamage, &FPlayerBot_TakeDamage);
 }
@@ -1638,7 +1652,7 @@ BOOL DispatchSpawn(edict_t *Entity)
 		return 0;
 
 	const char *WeaponName;
-
+	
 	for (int Index = 0; Index < MAX_WEAPON_TYPES; Index++)
 	{
 		WeaponName = WEAPON_CLASS[WEAPON_TYPE_ID[Index]];
@@ -1646,7 +1660,7 @@ BOOL DispatchSpawn(edict_t *Entity)
 		for (int OfIndex = 0; OfIndex < MAX_HOOKS; OfIndex++)
 			HookEntityFW(WeaponName, HOOK_OFFSETS[OfIndex], (V *)HOOK_FUNCS[OfIndex][Index], ((V **)HOOK_STORE[OfIndex] + Index));
 	}
-
+	
 	HookEntityFW(PLAYER_CLASS, EO_TakeDamage, (V *)Player_TakeDamage, &FPlayer_TakeDamage);
 	HookEntityFW(PLAYER_CLASS, EO_GiveAmmo, (V *)Player_GiveAmmo, &FPlayer_GiveAmmo);
 	HookEntityFW("worldspawn", EO_TraceAttack, (V *)TraceAttack, &FTraceAttackEntity);
@@ -1662,7 +1676,6 @@ BOOL DispatchSpawn(edict_t *Entity)
 
 	FPlayerKilled = GetEntityFW(PLAYER_CLASS, EO_Killed);
 	FGrenade_Spawn = GetEntityFW(PROJECTILE_CLASS, EO_Spawn);
-	FEntity_TakeDamage = GetEntityFW("func_wall", EO_TakeDamage);
 	FWeapon_PlayEmptySound = GetEntityFW(WEAPON_CLASS[CSW_P228], EO_Weapon_PlayEmptySound);
 	FWeapon_ResetEmptySound = GetEntityFW(WEAPON_CLASS[CSW_P228], EO_Weapon_ResetEmptySound);
 
@@ -1688,21 +1701,13 @@ BOOL DispatchSpawn_Post(edict_s *Entity)
 	PrecacheModule();
 	CanPrecache = FALSE;
 	Initialized = TRUE;
-
+	
 	for (int Index = 0; Index < AmmoCount; Index++)
 	{
 		CAmmo &Ammo = Ammos[Index];
-		
-		if (!Ammo.Name)
-		{
-			char DefName[32];
-			sprintf(DefName, "Ammo%i", AmmoCount);
-			Ammo.Name = STRING(ALLOC_STRING(DefName));
-		}
-
-		CheckAmmo(Ammo, Ammo.Name);
+		CheckAmmo(Ammo, Index);
 	}
-
+	
 	for (int Index = 0; Index < WeaponCount; Index++)
 	{
 		CWeapon &Weapon = Weapons[Index];
@@ -1713,20 +1718,21 @@ BOOL DispatchSpawn_Post(edict_s *Entity)
 			LOG_CONSOLE(PLID, "[CSWM] Found Weapon Without Model, Ignoring... [%s]", Name ? Name : "<Unnamed>");
 			continue;
 		}
-
+		
 		CheckWeapon(Weapon);
 		RecordWeaponDurationList(Weapons[Index]);
+		WeaponListMap.Insert(Weapon.GModel, WEAPON_TYPE_ID[Weapons[Index].Type]);
 	}
-
+	
 	return 0;
 }
 
-void ServerActivate(edict_t *Worldspawn, int MaxEdicts, int MaxPlayers)
+void ServerActivate(edict_t *WorldSpawn, int MaxEdicts, int MaxPlayers)
 {
 	SET_META_RESULT(MRES_IGNORED);
-	SVGame_Edicts = Worldspawn;
-	entvars_t *EntityVars = &Worldspawn->v;
-	byte *PrivateData = (byte *)Worldspawn->pvPrivateData;
+	SVGame_Edicts = WorldSpawn;
+	entvars_t *EntityVars = &WorldSpawn->v;
+	byte *PrivateData = (byte *)WorldSpawn->pvPrivateData;
 
 	for (size_t Index = 0; Index < 0xFFF; ++Index)
 	{
@@ -1736,7 +1742,7 @@ void ServerActivate(edict_t *Worldspawn, int MaxEdicts, int MaxPlayers)
 			return;
 		}
 	}
-
+	
 	LOG_CONSOLE(PLID, "[CSWM] Entity Vars Offset Is Invalid!");
 }
 
@@ -1748,6 +1754,7 @@ void ServerDeactivate_Post(void)
 	AmmoCount = AMMO_MAX_TYPES;
 	Ammos.Clear();
 	Projectiles.Clear();
+	TakeDamageFWs.Clear();
 	UpdateAmmoList();
 	RETURN_META(MRES_IGNORED);
 }

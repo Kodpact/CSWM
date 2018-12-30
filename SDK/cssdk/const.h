@@ -277,6 +277,7 @@
 #define DMG_NEVERGIB		(1<<12)		// with this bit OR'd in, no damage type will be able to gib victims upon death
 #define DMG_ALWAYSGIB		(1<<13)		// with this bit OR'd in, any damage type can be made to gib victims upon death
 #define DMG_DROWN		(1<<14)		// Drowning
+#define DMG_CUSTOM (1<<15) // custom
 
 // time-based damage
 #define DMG_TIMEBASED		(~(0x3FFF))	// mask for time-based damage

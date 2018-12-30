@@ -1,5 +1,5 @@
 edit:
-	g++ -shared -mtune=i386 -O3 -m32 \
+	g++-4.8 -shared -mtune=i386 -O3 -m32 \
 	-I ./ \
 	-I ../ \
 	-I ../SDK/ \

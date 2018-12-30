@@ -10,19 +10,24 @@
 
 #define DEFINE_CHAR64(Value) char Value[64]
 
+#define LocateCharacter(Buffer) while (*Buffer < 33) { if (*Buffer == 0 || *Buffer == '=') return FALSE; Buffer++; }
+#define ReadString(Buffer) while ((*Buffer >= 65 && *Buffer <= 90) || (*Buffer >= 97 && *Buffer <= 122) || (*Buffer >= 48 && *Buffer <= 57)) { Buffer++; }
+#define ReadWord(Buffer) while (*Buffer > 32) { Buffer++; }
+
 extern List<CWeapon> Weapons;
 extern List<CAmmo> Ammos;
 extern List<CProjectile> Projectiles;
 extern List<CEffect> Effects;
+extern List<int> TakeDamageFWs;
 
 extern StringHashMap AnimHashMap;
 
 extern BOOL CanPrecache;
 extern BOOL ClearWeapons;
 extern BOOL SV_Cheats;
-extern cvar_t *CVar_LogPointer;
-extern cvar_t *CVar_AMapPointer;
-extern cvar_t *CVar_AutoDetectAnimPointer;
+extern float *CVar_LogPointer;
+extern float *CVar_AMapPointer;
+extern float *CVar_AutoDetectAnimPointer;
 
 extern void *FPlayer_TakeDamage, *FPlayerBot_TakeDamage, *FEntity_TakeDamage;
 
@@ -77,6 +82,17 @@ static int GetLabelStartIndex(studiohdr_t *Studio)
 	return 0;
 }
 
+BOOL ValidAttackAnim(char *Value)
+{
+	if (!Value)
+		return TRUE;
+
+	if (Value[1] && ((Value[1] >= 'a' && Value[1] <= 'z') || (Value[1] >= 'A' && Value[1] <= 'Z')))
+		return FALSE;
+
+	return TRUE;
+}
+
 void DetectAnimation(CWeapon &Weapon, int Type)
 {
 	edict_t *InfoEdict = CREATE_ENTITY();
@@ -99,9 +115,9 @@ void DetectAnimation(CWeapon &Weapon, int Type)
 
 		switch (Type)
 		{
-			case DETECT_DRAW: if (!strncmp(Start, "draw", 4)) Weapon.AnimD = Index; break;
-			case DETECT_SHOOT: if (!strncmp(Start, "shoot", 5)) Weapon.AnimS.Append(Index); break;
-			case DETECT_RELOAD: if (!strncmp(Start, "reload", 6)) Weapon.AnimR = Index; break;
+			case DETECT_DRAW: if (!strnicmp(Start, "draw", 4)) Weapon.AnimD = Index; break;
+			case DETECT_SHOOT: if (!strnicmp(Start, "shoot", 5) && ValidAttackAnim(Start + 5)) Weapon.AnimS.Append(Index); break;
+			case DETECT_RELOAD: if (!strnicmp(Start, "reload", 6)) Weapon.AnimR = Index; break;
 		}
 	}
 }
@@ -110,7 +126,7 @@ BOOL InvalidAnimation(CWeapon &Weapon, int Animation)
 {
 	if (Weapon.DurationList.Length <= Animation || Animation < 0)
 	{
-		if (CVar_LogPointer->value)
+		if (*CVar_LogPointer)
 			LOG_CONSOLE(PLID, "[CSWM] Weapon %s Has Invalid Animation (%i), Trying To Reset...", Weapon.Model, Animation);
 
 		return TRUE;
@@ -119,30 +135,37 @@ BOOL InvalidAnimation(CWeapon &Weapon, int Animation)
 	return FALSE;
 }
 
-void CheckAmmo(CAmmo &Ammo, const char *Name)
+void CheckAmmo(CAmmo &Ammo, int Index)
 {
 	if (!Ammo.Cost)
 	{
-		if (CVar_LogPointer->value)
-			LOG_CONSOLE(PLID, "[CSWM] Found Ammo Without Cost, Setting Default... (%s)", Name);
+		if (*CVar_LogPointer)
+			LOG_CONSOLE(PLID, "[CSWM] Found Ammo Without Cost, Setting Default... (ID=%i)", Index);
 
 		Ammo.Cost = 30;
 	}
 
 	if (!Ammo.Amount)
 	{
-		if (CVar_LogPointer->value)
-			LOG_CONSOLE(PLID, "[CSWM] Found Ammo Without Clip Size, Setting Default... (%s)", Name);
+		if (*CVar_LogPointer)
+			LOG_CONSOLE(PLID, "[CSWM] Found Ammo Without Clip Size, Setting Default... (ID=%i)", Index);
 
 		Ammo.Amount = 30;
 	}
 
 	if (!Ammo.Max)
 	{
-		if (CVar_LogPointer->value)
-			LOG_CONSOLE(PLID, "[CSWM] Found Ammo Without Max Count, Setting Default... (%s)", Name);
+		if (*CVar_LogPointer)
+			LOG_CONSOLE(PLID, "[CSWM] Found Ammo Without Max Count, Setting Default... (ID=%i)", Index);
 
 		Ammo.Cost = 90;
+	}
+
+	if (!Ammo.Name)
+	{
+		char Name[32];
+		sprintf(Name, "Ammo%i", AmmoCount);
+		Ammo.Name = STRING(ALLOC_STRING(Name));
 	}
 }
 
@@ -152,7 +175,7 @@ void CheckWeapon(CWeapon &Weapon)
 
 	if (!Weapon.VModel)
 	{
-		if (CVar_LogPointer->value)
+		if (*CVar_LogPointer)
 			LOG_CONSOLE(PLID, "[CSWM] Weapon %s Has Invalid View Model, Trying To Detect...", Weapon.Model);
 
 		sprintf(Buffer, "models/%s%s/V.mdl", PathAddon, Weapon.Model);
@@ -163,7 +186,7 @@ void CheckWeapon(CWeapon &Weapon)
 
 	if (!Weapon.PModel)
 	{
-		if (CVar_LogPointer->value)
+		if (*CVar_LogPointer)
 			LOG_CONSOLE(PLID, "[CSWM] Weapon %s Has Invalid Weap Model, Trying To Detect...", Weapon.Model);
 
 		sprintf(Buffer, "models/%s%s/P.mdl", PathAddon, Weapon.Model);
@@ -174,7 +197,7 @@ void CheckWeapon(CWeapon &Weapon)
 
 	if (!Weapon.WModel)
 	{
-		if (CVar_LogPointer->value)
+		if (*CVar_LogPointer)
 			LOG_CONSOLE(PLID, "[CSWM] Weapon %s Has Invalid World Model, Trying To Detect...", Weapon.Model);
 
 		sprintf(Buffer, "models/%s%s/W.mdl", PathAddon, Weapon.Model);
@@ -185,7 +208,7 @@ void CheckWeapon(CWeapon &Weapon)
 
 	if (!Weapon.GModel)
 	{
-		if (CVar_LogPointer->value)
+		if (*CVar_LogPointer)
 			LOG_CONSOLE(PLID, "[CSWM] Weapon %s Has Invalid WeaponList, Trying To Detect...", Weapon.Model);
 
 		sprintf(Buffer, "weapon_%s", Weapon.Model);
@@ -197,10 +220,10 @@ void CheckWeapon(CWeapon &Weapon)
 
 	if (!Weapon.FireSound)
 	{
-		if (CVar_LogPointer->value)
+		if (*CVar_LogPointer)
 			LOG_CONSOLE(PLID, "[CSWM] Weapon %s Has Invalid Fire Sound, Trying To Detect...", Weapon.Model);
 
-		sprintf(Buffer, "weapon/%s-1.wav", Weapon.Model);
+		sprintf(Buffer, "weapons/%s-1.wav", Weapon.Model);
 		Weapon.FireSound = STRING(ALLOC_STRING(Buffer));
 	}
 
@@ -208,7 +231,7 @@ void CheckWeapon(CWeapon &Weapon)
 
 	if (!Weapon.AmmoID)
 	{
-		if (CVar_LogPointer->value)
+		if (*CVar_LogPointer)
 			LOG_CONSOLE(PLID, "[CSWM] Weapon %s Has Invalid Ammo Type, Setting Default...", Weapon.Model);
 
 		Weapon.AmmoID = (AmmoType)WEAPON_TYPE_AMMO[Weapon.Type];
@@ -216,7 +239,7 @@ void CheckWeapon(CWeapon &Weapon)
 
 	if (!Weapon.Clip)
 	{
-		if (CVar_LogPointer->value)
+		if (*CVar_LogPointer)
 			LOG_CONSOLE(PLID, "[CSWM] Weapon %s Has Invalid Clip, Setting Default...", Weapon.Model);
 
 		Weapon.Clip = WEAPON_TYPE_CLIP[Weapon.Type];
@@ -239,7 +262,9 @@ void CheckWeapon(CWeapon &Weapon)
 
 		if (Weapon.AnimS.Length < 1)
 		{
-			LOG_CONSOLE(PLID, "[CSWM] Can Not Detect Weapon Primary Attack Animation. (%s)", Weapon.Model);
+			if (*CVar_LogPointer)
+				LOG_CONSOLE(PLID, "[CSWM] Can Not Detect Weapon Primary Attack Animation. (%s)", Weapon.Model);
+			
 			Weapon.AnimS.Append(0);
 		}
 	}
@@ -252,7 +277,7 @@ void CheckWeapon(CWeapon &Weapon)
 
 	if (!Weapon.Speed)
 	{
-		if (CVar_LogPointer->value)
+		if (*CVar_LogPointer)
 			LOG_CONSOLE(PLID, "[CSWM] Found Weapon Without Speed, Using Default Setting... (%s)", Weapon.Model);
 
 		Weapon.Speed = WEAPON_SPEED[Weapon.Type];
@@ -260,20 +285,20 @@ void CheckWeapon(CWeapon &Weapon)
 
 	if (Weapon.AnimD <= 0 || Weapon.AnimD > 10.0f)
 	{
-		if (CVar_LogPointer->value)
-			LOG_CONSOLE(PLID, "[CSWM] Weapon %s Has Draw Animation With %.2f Delay!", Weapon.AnimD);
+		if (*CVar_LogPointer)
+			LOG_CONSOLE(PLID, "[CSWM] Weapon %s Has Draw Animation With %.2f Delay!", Weapon.Model, Weapon.AnimD);
 	}
 
 	if (Weapon.Delay <= 0 || Weapon.Delay > 10.0f)
 	{
-		if (CVar_LogPointer->value)
-			LOG_CONSOLE(PLID, "[CSWM] Warning: Weapon %s Has Shoot Animation With %.2f Delay!", Weapon.AnimD);
+		if (*CVar_LogPointer)
+			LOG_CONSOLE(PLID, "[CSWM] Warning: Weapon %s Has Shoot Animation With %.2f Delay!", Weapon.Model, Weapon.AnimD);
 	}
 
 	if (Weapon.AnimR <= 0 || Weapon.AnimR > 10.0f)
 	{
-		if (CVar_LogPointer->value)
-			LOG_CONSOLE(PLID, "[CSWM] Warning: Weapon %s Has Reload Animation With %.2f Delay!", Weapon.AnimD);
+		if (*CVar_LogPointer)
+			LOG_CONSOLE(PLID, "[CSWM] Warning: Weapon %s Has Reload Animation With %.2f Delay!", Weapon.Model, Weapon.AnimD);
 	}
 }
 
@@ -317,7 +342,7 @@ static cell AMX_NATIVE_CALL CreateWeapon(AMX *Plugin, cell *Params)
 	Weapon.Type = Type;
 	Weapon.Speed = 250.0f;
 
-	if (CVar_LogPointer->value)
+	if (*CVar_LogPointer)
 		LOG_CONSOLE(PLID, "[CSWM] Creating Weapon: %s (Type = '%s')", Weapon.Name, WEAPON_TYPE_NAME[Weapon.Type]);
 
 	Weapons.Append(Weapon);
@@ -331,8 +356,9 @@ static cell AMX_NATIVE_CALL CreateAmmo(AMX *Plugin, cell *Params)
 	Ammo.Cost = Params[1];
 	Ammo.Amount = Params[2];
 	Ammo.Max = Params[3];
-	Ammos.Append(Ammo);
+	Ammo.Name = NULL;
 
+	Ammos.Append(Ammo);
 	AmmoCount++;
 	return AmmoCount - 1;
 }
@@ -379,7 +405,7 @@ static cell AMX_NATIVE_CALL BuildWeaponList(AMX *Plugin, cell *Params)
 
 	Weapon.GModel = STRING(ALLOC_STRING(MF_GetAmxString(Plugin, Params[2], 0, NULL)));
 
-	if (CVar_LogPointer->value)
+	if (*CVar_LogPointer)
 		LOG_CONSOLE(PLID, "[CSWM] Building Weapon List '%s' For '%s'.", Weapon.GModel, Weapon.Name);
 
 	char Path[MAX_PATH];
@@ -397,7 +423,7 @@ static cell AMX_NATIVE_CALL BuildWeaponAmmunition(AMX *Plugin, cell *Params)
 
 	CWeapon &Weapon = Weapons[Index];
 
-	if (CVar_LogPointer->value)
+	if (*CVar_LogPointer)
 		LOG_CONSOLE(PLID, "[CSWM] Building Weapon Ammunition For '%s'.", Weapon.Name);
 
 	Weapon.Clip = Params[2];
@@ -414,7 +440,7 @@ static cell AMX_NATIVE_CALL BuildWeaponDeploy(AMX *Plugin, cell *Params)
 
 	CWeapon &Weapon = Weapons[Index];
 
-	if (CVar_LogPointer->value)
+	if (*CVar_LogPointer)
 		LOG_CONSOLE(PLID, "[CSWM] Building Weapon Deploy For '%s'.", Weapon.Name);
 
 	float Duration = CellToFloat(Params[3]);
@@ -441,7 +467,7 @@ static cell AMX_NATIVE_CALL BuildWeaponPrimaryAttack(AMX *Plugin, cell *Params)
 
 	CWeapon &Weapon = Weapons[Index];
 
-	if (CVar_LogPointer->value)
+	if (*CVar_LogPointer)
 		LOG_CONSOLE(PLID, "[CSWM] Building Weapon Priamry Attack For '%s'.", Weapon.Name);
 
 	Weapon.Delay = CellToFloat(Params[2]);
@@ -470,7 +496,7 @@ static cell AMX_NATIVE_CALL BuildWeaponReload(AMX *Plugin, cell *Params)
 
 	CWeapon &Weapon = Weapons[Index];
 
-	if (CVar_LogPointer->value)
+	if (*CVar_LogPointer)
 		LOG_CONSOLE(PLID, "[CSWM] Building Weapon Reload(Rifle) For '%s'.", Weapon.Name);
 
 	float Duration = CellToFloat(Params[3]);
@@ -497,7 +523,7 @@ static cell AMX_NATIVE_CALL BuildWeaponReloadShotgun(AMX *Plugin, cell *Params)
 
 	CWeapon &Weapon = Weapons[Index];
 
-	if (CVar_LogPointer->value)
+	if (*CVar_LogPointer)
 		LOG_CONSOLE(PLID, "[CSWM] Building Weapon Reload(Shotgun) For '%s'.", Weapon.Name);
 
 	Weapon.Reload = CellToFloat(Params[2]);
@@ -525,7 +551,7 @@ static cell AMX_NATIVE_CALL BuildWeaponSecondaryAttack(AMX *Plugin, cell *Params
 
 	CWeapon &Weapon = Weapons[Index];
 
-	if (CVar_LogPointer->value)
+	if (*CVar_LogPointer)
 		LOG_CONSOLE(PLID, "[CSWM] Building Weapon Secondary Attack For '%s'.", Weapon.Name);
 
 	Weapon.A2V = (Attack2 *)new int[WEAPON_A2_SIZE[Params[2]]];
@@ -601,7 +627,7 @@ static cell AMX_NATIVE_CALL BuildWeaponSecondaryAttack(AMX *Plugin, cell *Params
 		}
 		default:
 		{
-			if (CVar_LogPointer->value)
+			if (*CVar_LogPointer)
 				LOG_CONSOLE(PLID, "[CSWM] Invalid Attack2 Type: %i, Resetting...", Weapon.A2I);
 
 			Weapon.A2I = 0;
@@ -656,7 +682,7 @@ static cell AMX_NATIVE_CALL RegisterWeaponForward(AMX *Plugin, cell *Params)
 
 	CWeapon &Weapon = Weapons[Index];
 
-	if (CVar_LogPointer->value)
+	if (*CVar_LogPointer)
 		LOG_CONSOLE(PLID, "[CSWM] Registering Weapon Forward For '%s'.", Weapon.Name);
 
 	char *String = MF_GetAmxString(Plugin, Params[3], 0, NULL);
@@ -669,7 +695,7 @@ static cell AMX_NATIVE_CALL RegisterWeaponForward(AMX *Plugin, cell *Params)
 		Weapon.Forwards[Forward] = MF_RegisterSPForwardByName(Plugin, String, FP_CELL, FP_CELL, FP_DONE);
 	else
 		Weapon.Forwards[Forward] = MF_RegisterSPForwardByName(Plugin, String, FP_CELL, FP_DONE);
-
+	
 	return 0;
 }
 
@@ -705,28 +731,158 @@ static cell AMX_NATIVE_CALL PrecacheWeaponModelSounds(AMX *AMX, cell *Params)
 	return 0;
 }
 
-static cell AMX_NATIVE_CALL FindWeaponByName(AMX *Plugin, cell *Params)
+static cell AMX_NATIVE_CALL PrecacheWeaponModelSoundsAsGenerics(AMX *AMX, cell *Params)
+{
+	cell Index = Params[1];
+
+	if (Index < 0 || Index >= WeaponCount)
+		return 0;
+
+	edict_t *InfoEdict = CREATE_ENTITY();
+	SET_MODEL(InfoEdict, STRING(Weapons[Index].VModel));
+	studiohdr_t *Studio = (studiohdr_t *)GET_MODEL_PTR(InfoEdict);
+	REMOVE_ENTITY(InfoEdict);
+	mstudioseqdesc_t *SeqDesc = (mstudioseqdesc_t *)((uintptr_t)Studio + Studio->seqindex);
+
+	for (int index = 0; index < Studio->numseq; index++)
+	{
+		mstudioevent_t *Event = (mstudioevent_t *)((uintptr_t)Studio + SeqDesc[index].eventindex);
+
+		for (int i = 0; i < SeqDesc[index].numevents; i++)
+		{
+			if (Event[i].event != 5004)
+				continue;
+
+			if (Event[i].options[0] == '\0')
+				continue;
+
+			char Buffer[MAX_PATH];
+			sprintf(Buffer, "weapons/%s", Event[i].options);
+			PRECACHE_SOUND(STRING(ALLOC_STRING(Buffer)));
+		}
+	}
+
+	return 0;
+}
+
+BOOL LocateSprite(char *&Text)
+{
+	int Level = 0;
+
+	while (*Text)
+	{
+		if (!Level)
+		{
+			if (*Text > 32)
+			{
+				Level = 1;
+				
+				if ((strnicmp(Text, "zoom", 4) || Text[4] == '_') &&
+					strnicmp(Text, "weapon", 6) && strnicmp(Text, "ammo", 4))
+					return FALSE;
+			}
+		}
+		else if (Level > 0)
+		{
+			if (*Text <= 32)
+				Level = -(Level + 1);
+		}
+		else if (Level < 0)
+		{
+			if (*Text > 32)
+				Level = -(Level - 1);
+
+			if (Level == 5)
+				break;
+		}
+
+		Text++;
+	}
+	
+	if (*Text == 0)
+		return FALSE;
+
+	return TRUE;
+}
+
+static cell AMX_NATIVE_CALL PrecacheWeaponListSprites(AMX *AMX, cell *Params)
+{
+	cell Index = Params[1];
+
+	if (Index < 0 || Index >= WeaponCount)
+		return 0;
+
+	const char *Path = MF_BuildPathname("sprites/%s.txt", Weapons[Index].GModel);
+	FILE *HUD = fopen(Path, "rt");
+	
+	if (!HUD)
+		return 0;
+
+	char Buffer[260];
+
+	while (!feof(HUD))
+	{
+		fgets(Buffer, 260, HUD);
+
+		if (!Buffer[0])
+			continue;
+
+		char *Temp = Buffer;
+		
+		if (!LocateSprite(Temp))
+			continue;
+
+		char *Start = Temp;
+		ReadWord(Temp);
+		
+		if (Temp == Start)
+			continue;
+
+		if (*Temp != 0)
+			*Temp = 0;
+
+		sprintf(Buffer, "sprites/%s.spr", Start);
+		PRECACHE_GENERIC(STRING(ALLOC_STRING(Buffer)));
+	}
+
+	fclose(HUD);
+	return 1;
+}
+
+static cell AMX_NATIVE_CALL FindWeaponByModel(AMX *Plugin, cell *Params)
 {
 	char *Name = MF_GetAmxString(Plugin, Params[1], 0, NULL);
 
 	for (int Index = 0; Index < WeaponCount; Index++)
 	{
-		if (!strcmp(Name, STRING(Weapons[Index].Model)))
+		if (!strcmp(Name, Weapons[Index].Model))
 			return Index;
 	}
 
 	return -1;
 }
 
-static cell AMX_NATIVE_CALL GiveWeaponByName(AMX *Plugin, cell *Params)
+static cell AMX_NATIVE_CALL FindWeaponByName(AMX *Plugin, cell *Params)
+{
+	char *Name = MF_GetAmxString(Plugin, Params[1], 0, NULL);
+
+	for (int Index = 0; Index < WeaponCount; Index++)
+	{
+		if (!strcmp(Name, Weapons[Index].Name))
+			return Index;
+	}
+
+	return -1;
+}
+
+static cell AMX_NATIVE_CALL GiveWeaponByModel(AMX *Plugin, cell *Params)
 {
 	cell Index = Params[1];
 
 	if (Index < 0 || Index > gpGlobals->maxClients)
 		return FALSE;
 
-	GiveWeaponByName(EDICT_FOR_NUM(Index), (char *)MF_GetAmxString(Plugin, Params[2], 0, NULL));
-	return TRUE;
+	return NUM_FOR_EDICT(GiveWeaponByName(EDICT_FOR_NUM(Index), (char *)MF_GetAmxString(Plugin, Params[2], 0, NULL)));
 }
 
 static cell AMX_NATIVE_CALL GiveWeaponByID(AMX *Plugin, cell *Params)
@@ -735,13 +891,17 @@ static cell AMX_NATIVE_CALL GiveWeaponByID(AMX *Plugin, cell *Params)
 	cell WIndex = Params[2];
 
 	if (PIndex < 0 || PIndex > gpGlobals->maxClients)
-		return FALSE;
+		return 0;
 
 	if (WIndex < 0 || WIndex >= WeaponCount)
-		return FALSE;
+		return 0;
 
-	GiveWeapon(EDICT_FOR_NUM(PIndex), WIndex);
-	return TRUE;
+	edict_t *Result = GiveWeapon(EDICT_FOR_NUM(PIndex), WIndex);
+
+	if (!Result)
+		return 0;
+
+	return NUM_FOR_EDICT(Result);
 }
 
 #pragma warning (disable : 4701)
@@ -756,7 +916,7 @@ static cell AMX_NATIVE_CALL GetWeaponData(AMX *Plugin, cell *Params)
 	CWeapon &Weapon = Weapons[Index];
 	int Type;
 	void *Data = NULL;
-
+	
 	switch (Params[2])
 	{
 		case WData::WD_VModel: Type = TYPE_STRING; Data = (void *)Weapon.VModel; break;
@@ -782,8 +942,9 @@ static cell AMX_NATIVE_CALL GetWeaponData(AMX *Plugin, cell *Params)
 		case WData::WD_Speed: Type = TYPE_FLOAT; Data = &Weapon.Speed; break;
 		case WData::WD_Forwards: Type = TYPE_ARRAY; Data = &Weapon.Forwards; break;
 		case WData::WD_DurationList: Type = TYPE_ARRAY; Data = &Weapon.DurationList; break;
+		default: return 0;
 	}
-
+	
 	if (!Data)
 		return 0;
 
@@ -791,31 +952,18 @@ static cell AMX_NATIVE_CALL GetWeaponData(AMX *Plugin, cell *Params)
 
 	if (Type > TYPE_FLOAT)
 		Size = *GetAMXAddr(Plugin, Params[4]);
-
-	switch (Type)
+	
+	if (Type <= TYPE_FLOAT)
+		return *(int *)Data;
+	else if (Type == TYPE_STRING)
+		MF_SetAmxString(Plugin, Params[3], (const char *)Data, Size);
+	else if (Type == TYPE_ARRAY)
 	{
-		case TYPE_INT:
-		{
-			return *(int *)Data;
-		}
-		case TYPE_FLOAT:
-		{
-			return FloatToCell(*(float *)Data);
-		}
-		case TYPE_STRING:
-		{
-			MF_SetAmxString(Plugin, Params[3], (const char *)Data, Size);
-			break;
-		}
-		case TYPE_ARRAY:
-		{
-			Size = min(Size, ((List<int> *)Data)->Length);
+		Size = min(Size, ((List<int> *)Data)->Length);
+		int *Variable = GetAMXAddr(Plugin, Params[3]);
 
-			for (Index = 0; Index < Size; Index++)
-			{
-				*(GetAMXAddr(Plugin, Params[3]) + Index) = ((List<int> *)Data)->Data[Index];
-			};
-		}
+		for (Index = 0; Index < Size; Index++)
+			*(Variable + Index) = ((List<int> *)Data)->Data[Index];
 	}
 
 	return 0;
@@ -845,10 +993,7 @@ static cell AMX_NATIVE_CALL CreateProjectile(AMX *Plugin, cell *Params)
 	Projectile.Gravity = CellToFloat(Params[2]);
 	Projectile.Speed = CellToFloat(Params[3]);
 	Projectile.Forward = MF_RegisterSPForwardByName(Plugin, MF_GetAmxString(Plugin, Params[4], 0, NULL), FP_CELL, FP_DONE);
-
-	if (Params[0] / sizeof(cell) > 4)
-		Projectile.Duration = CellToFloat(*GetAMXAddr(Plugin, Params[5]));
-
+	Projectile.Duration = CellToFloat(Params[5]);
 	Projectiles.Append(Projectile);
 	return Projectiles.Length - 1;
 }
@@ -872,7 +1017,12 @@ static cell AMX_NATIVE_CALL ShootProjectileTimed(AMX *Plugin, cell *Params)
 	if (InvalidEntity(LauncherEdict))
 		return 0;
 
-	return ShootProjectileTimed(LauncherEdict, Params[2]);
+	int ProjectileID = Params[2];
+
+	if (ProjectileID < 0 || ProjectileID >= Projectiles.Length)
+		return 0;
+
+	return ShootProjectileTimed(LauncherEdict, ProjectileID);
 }
 
 static cell AMX_NATIVE_CALL ShootProjectileContact(AMX *Plugin, cell *Params)
@@ -1052,9 +1202,8 @@ static cell AMX_NATIVE_CALL RadiusDamageEx(AMX *Plugin, cell *Params)
 	int Flags = Params[7];
 	edict_t *SelfEdict = AttackerVars->flags & FL_CLIENT ? AttackerVars->pContainingEntity : AttackerVars->owner;
 	float AdjustedDamage;
-	void *DamageFunc;
 	BOOL Result;
-
+	
 	while ((TargetEdict = FIND_ENTITY_IN_SPHERE(TargetEdict, Origin, Radius)) != SVGame_Edicts)
 	{
 		if (!TargetEdict->pvPrivateData)
@@ -1066,7 +1215,7 @@ static cell AMX_NATIVE_CALL RadiusDamageEx(AMX *Plugin, cell *Params)
 		BaseEntity = (CBaseEntity *)TargetEdict->pvPrivateData;
 		EntityVars = EV_FROM_PD(BaseEntity);
 		TargetOrigin = TargetEdict->v.origin;
-
+		
 		if (EntityVars->solid == SOLID_BSP)
 			TargetOrigin = TargetOrigin + (TargetEdict->v.mins + TargetEdict->v.maxs) * 0.5f;
 
@@ -1088,17 +1237,10 @@ static cell AMX_NATIVE_CALL RadiusDamageEx(AMX *Plugin, cell *Params)
 
 		AdjustedDamage = sin((1 - (clamp((TargetOrigin - Origin).Length(), 0.0f, Radius) / Radius)) * (3.14159f / 2)) * Damage;
 
-		if (Damage <= 0)
+		if (AdjustedDamage <= 0.0f)
 			continue;
 		
-		if (EntityVars->flags & FL_FAKECLIENT)
-			DamageFunc = FPlayerBot_TakeDamage;
-		else if (EntityVars->flags & FL_CLIENT)
-			DamageFunc = FPlayer_TakeDamage;
-		else
-			DamageFunc = FEntity_TakeDamage;
-
-		Result = CALLFUNC_GAME(FN_TAKEDAMAGE, DamageFunc, BaseEntity, InflictorVars, AttackerVars, AdjustedDamage, DamageBits);
+		Result = CALLFUNC_GAME(FN_TAKEDAMAGE, (*(void ***)BaseEntity)[EO_TakeDamage], BaseEntity, InflictorVars, AttackerVars, AdjustedDamage, DamageBits | DMG_CUSTOM);
 
 		if (!(Flags & RDFlag::KnockAny) && !Result)
 			continue;
@@ -1136,10 +1278,10 @@ void PerformCleaveDamage()
 		if (!InViewCone(CleaveDamageInfo.Origin, CleaveDamageInfo.VAngles, CleaveDamageInfo.FOV, TargetOrigin, CleaveDamageInfo.Accurate))
 			continue;
 
-		CALLFUNC_GAME(FN_TAKEDAMAGE, FEntity_TakeDamage, BaseEntity,
+		CALLFUNC_GAME(FN_TAKEDAMAGE, (*(void ***)BaseEntity)[EO_TakeDamage], BaseEntity,
 			CleaveDamageInfo.Inflictor, CleaveDamageInfo.Attacker,
 			((CleaveDamageInfo.Damage *CleaveDamageInfo.Radius) / (TargetOrigin - CleaveDamageInfo.Origin).Length()),
-			CleaveDamageInfo.DamageType);
+			CleaveDamageInfo.DamageType | DMG_CUSTOM);
 	}
 }
 
@@ -1507,6 +1649,14 @@ static cell AMX_NATIVE_CALL PlayerKnockback(AMX *Plugin, cell *Params)
 	return 0;
 }
 
+static cell AMX_NATIVE_CALL RegisterTakeDamageForward(AMX *Plugin, cell *Params)
+{
+	char *Callback = MF_GetAmxString(Plugin, Params[1], 0, NULL);
+	int Forward = MF_RegisterSPForwardByName(Plugin, Callback, FP_CELL, FP_CELL, FP_CELL, FP_FLOAT, FP_CELL, FP_DONE);
+	TakeDamageFWs.Append(Forward);
+	return 0;
+}
+
 AMX_NATIVE_INFO AMXX_NATIVES[] =
 {
 	{ "CreateWeapon", CreateWeapon },
@@ -1526,8 +1676,11 @@ AMX_NATIVE_INFO AMXX_NATIVES[] =
 	{ "CheckWeaponParams", CheckWeaponParams },
 	{ "RegisterWeaponForward", RegisterWeaponForward },
 	{ "PrecacheWeaponModelSounds", PrecacheWeaponModelSounds },
+	{ "PrecacheWeaponModelSoundsAsGenerics", PrecacheWeaponModelSoundsAsGenerics },
+	{ "PrecacheWeaponListSprites", PrecacheWeaponListSprites },
+	{ "FindWeaponByModel", FindWeaponByModel },
 	{ "FindWeaponByName", FindWeaponByName },
-	{ "GiveWeaponByName", GiveWeaponByName },
+	{ "GiveWeaponByModel", GiveWeaponByModel },
 	{ "GiveWeaponByID", GiveWeaponByID },
 	{ "GetWeaponData", GetWeaponData },
 	{ "SendWeaponAnim", SendWeaponAnim },
@@ -1569,11 +1722,9 @@ AMX_NATIVE_INFO AMXX_NATIVES[] =
 	{ "SetWeaponWBody", SetWeaponWBody },
 	{ "SetKnockbackInfo", SetKnockbackInfo },
 	{ "PlayerKnockback" , PlayerKnockback },
+	{ "RegisterTakeDamageForward", RegisterTakeDamageForward },
 	{ NULL, NULL },
 };
-
-#define LocateCharacter(Buffer) while (*Buffer < 33) { if (*Buffer == 0 || *Buffer == '=') return FALSE; Buffer++; }
-#define ReadString(Buffer) while ((*Buffer >= 65 && *Buffer <= 90) || (*Buffer >= 97 && *Buffer <= 122) || (*Buffer >= 48 && *Buffer <= 57)) { Buffer++; }
 
 BOOL INI_ReadQuotedString(char *Buffer)
 {
@@ -1694,7 +1845,7 @@ void ReadWeaponAttack2(CWeapon &Weapon, char *ValuePack)
 
 	if (Weapon.A2I < 1 || Weapon.A2I > 8)
 	{
-		if (CVar_LogPointer->value)
+		if (*CVar_LogPointer)
 			LOG_CONSOLE(PLID, "[CSWM] Invalid Attack2 Type: %i (%s)", Weapon.A2I, Weapon.Model);
 
 		return;
@@ -1783,7 +1934,7 @@ void ReadWeaponAmmo(CWeapon &Weapon, char *Value)
 		if (!Name)
 			continue;
 
-		if (!strcmp(Value, Name))
+		if (!stricmp(Value, Name))
 		{
 			Weapon.AmmoID = (AmmoType)Index;
 			break;
@@ -1830,14 +1981,18 @@ const CParam WeaponParams[] =
 	{ "Type", TYPE_OTHER1, 0 },
 	{ "Name", TYPE_STRING, offsetof(CWeapon, Name) },
 	{ "DeployAnim", TYPE_INT, offsetof(CWeapon, AnimD) },
+	{ "DeployDuration", TYPE_FLOAT, offsetof(CWeapon, Reload) },
 	{ "DeployTime", TYPE_FLOAT, offsetof(CWeapon, Deploy) },
 	{ "ShootAnim", TYPE_ARRAY, offsetof(CWeapon, AnimS) },
+	{ "ShootDuration", TYPE_FLOAT, offsetof(CWeapon, Delay) },
 	{ "ShootTime", TYPE_FLOAT, offsetof(CWeapon, Delay) },
 	{ "Delay", TYPE_FLOAT, offsetof(CWeapon, Delay) },
 	{ "Damage", TYPE_FLOAT, offsetof(CWeapon, Damage) },
 	{ "Recoil", TYPE_FLOAT, offsetof(CWeapon, Recoil) },
 	{ "ReloadAnimation", TYPE_FLOAT, offsetof(CWeapon, AnimR) },
 	{ "ReloadDuration", TYPE_FLOAT, offsetof(CWeapon, Reload) },
+	{ "ReloadTime", TYPE_FLOAT, offsetof(CWeapon, Reload) },
+	{ "ReloadType", TYPE_INT, offsetof(CWeapon, AnimR)  },
 	{ "Clip", TYPE_INT, offsetof(CWeapon, Clip) },
 	{ "AmmoID", TYPE_INT, offsetof(CWeapon, AmmoID) },
 	{ "Ammo", TYPE_OTHER3, 0 },
@@ -1923,7 +2078,7 @@ void LoadConfig(char *PathName)
 
 		if (!Dest)
 		{
-			if (CVar_LogPointer->value)
+			if (*CVar_LogPointer)
 				LOG_CONSOLE(PLID, "[CSWM] Unknown Key '%s'. (Config.ini)", Key);
 
 			continue;
@@ -1948,7 +2103,7 @@ void LoadAmmo(char *Directory, char *FileName)
 	if (!File)
 		return;
 	
-	if (CVar_LogPointer->value)
+	if (*CVar_LogPointer)
 		LOG_CONSOLE(PLID, "[CSWM] Loading Ammo From File '%s'...", FileName);
 	
 	CAmmo Ammo;
@@ -1971,7 +2126,7 @@ void LoadAmmo(char *Directory, char *FileName)
 
 		if (!AParamHashMap.Retrieve(Key, (int *)&Output))
 		{
-			if (CVar_LogPointer->value)
+			if (*CVar_LogPointer)
 				LOG_CONSOLE(PLID, "[CSWM] Unknown Parameter %s. (%s)", Key, FileName);
 
 			continue;
@@ -1985,7 +2140,7 @@ void LoadAmmo(char *Directory, char *FileName)
 			*(const char **)(AmmoP + Param->Offset) = STRING(ALLOC_STRING(Value));
 	}
 
-	CheckAmmo(Ammo, FileName);
+	CheckAmmo(Ammo, AmmoCount);
 	Ammos.Append(Ammo);
 	AmmoCount++;
 	fclose(File);
@@ -2004,7 +2159,7 @@ void LoadWeapon(char *Directory, char *FileName)
 	if (!File)
 		return;
 
-	if (CVar_LogPointer->value)
+	if (*CVar_LogPointer)
 		LOG_CONSOLE(PLID, "[CSWM] Loading Weapon From File '%s'...", FileName);
 
 	CWeapon Weapon;
@@ -2027,7 +2182,7 @@ void LoadWeapon(char *Directory, char *FileName)
 
 		if (!WParamHashMap.Retrieve(Key, (int *)&Output))
 		{
-			if (CVar_LogPointer->value)
+			if (*CVar_LogPointer)
 				LOG_CONSOLE(PLID, "[CSWM] Unknown Parameter %s. (%s)", Key, FileName);
 
 			continue;
@@ -2148,10 +2303,20 @@ void LoadWeapons(void)
 }
 #endif
 
+void WeaponList()
+{
+	for (int Index = 0; Index < WeaponCount; Index++)
+	{
+		LOG_CONSOLE(PLID, "%i) %s", Index + 1, Weapons[Index].Model);
+	}
+
+	LOG_CONSOLE(PLID, "Total Weapons: %i", WeaponCount);
+}
+
 void OnAmxxAttach(void)
 {
 	MF_AddNatives(AMXX_NATIVES);
-	CVar_LogPointer = CVAR_GET_POINTER("developer");
+	CVar_LogPointer = &CVAR_GET_POINTER("developer")->value;
 	const char *ConfigsDir = MF_BuildPathname("%s/cswm", MF_GetLocalInfo("amxx_configsdir", "addons/amxmodx/configs"));
 	char PathName[MAX_PATH];
 	sprintf(PathName, "%s/Anim.lst", ConfigsDir);
@@ -2166,5 +2331,6 @@ void OnAmxxAttach(void)
 		WParamHashMap.Insert(WeaponParams[Index].Name, (intptr_t)(WeaponParams + Index));
 
 	UpdateAmmoList();
+	ADD_SERVER_COMMAND("cswm_list", WeaponList);
 }
 

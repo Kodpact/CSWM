@@ -37,9 +37,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\FakeCMD.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\Module.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -51,6 +48,9 @@
     </ClCompile>
     <ClCompile Include="..\182\AMXX.cpp">
       <Filter>18X\AMXX</Filter>
+    </ClCompile>
+    <ClCompile Include="..\FakeCMD.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

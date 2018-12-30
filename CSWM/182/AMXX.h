@@ -1332,7 +1332,7 @@ unsigned char *FN_SetFatPAS(float *org);
 #endif // FN_SetFatPAS
 
 #ifdef FN_CheckVisibility
-int FN_CheckVisibility(const edict_t *entity, unsigned char *pset);
+int FN_CheckVisibility(edict_t *entity, unsigned char *pset);
 #endif // FN_CheckVisibility
 
 #ifdef FN_DeltaSetField

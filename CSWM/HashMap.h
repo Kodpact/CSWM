@@ -99,6 +99,16 @@ public:
 		return NodeCount;
 	}
 
+	static uint32_t HashValue(const char *Key)
+	{
+		uint32_t Hash = 0;
+
+		while (*Key)
+			Hash = Hash * 101 + *Key++;
+
+		return Hash;
+	}
+
 private:
 	struct StringHashNode
 	{
@@ -111,32 +121,18 @@ private:
 	StringHashNode **Buckets = NULL;
 	int BucketCount = 0, NodeCount = 0;
 
-	uint32_t HashValue(const char *Key)
-	{
-		uint32_t Hash = 0;
-
-		while (*Key)
-			Hash = Hash * 101 + *Key++;
-
-		return Hash;
-	}
-
 	StringHashNode *CreateNode(const char *Key, int Value)
 	{
 		StringHashNode *HashNode;
 		HashNode = (StringHashNode *)malloc(sizeof(StringHashNode));
-		HashNode->Key = (char *)malloc(strlen(Key));
-		strcpy(HashNode->Key, Key);
+		HashNode->Key = strdup(Key);
 		HashNode->Value = Value;
 		HashNode->Hash = HashValue(HashNode->Key);
 		return HashNode;
 	}
 
-
 	int GetBucketIndex(uint32_t Hash)
 	{
-		/* If the implementation is changed to allow a non-power-of-2 bucket count,
-		* the line below should be changed to use mod instead of AND */
 		return Hash & (BucketCount - 1);
 	}
 
@@ -149,10 +145,10 @@ private:
 	}
 
 
-	int Resize(int nbuckets)
+	int Resize(int NewBucketCount)
 	{
 		StringHashNode *HashNodes, *HashNode, *Next;
-		StringHashNode **_Buckets;
+		StringHashNode **NewBuckets;
 		int Index = BucketCount;
 
 		HashNodes = NULL;
@@ -170,13 +166,15 @@ private:
 			}
 		}
 
+		if (!Buckets || *Buckets == NULL)
+			NewBuckets = (StringHashNode **)malloc(sizeof(*Buckets) * NewBucketCount);
+		else
+			NewBuckets = (StringHashNode **)realloc(Buckets, sizeof(*Buckets) * NewBucketCount);
 
-		_Buckets = (StringHashNode **)realloc(Buckets, sizeof(*Buckets) * nbuckets);
-
-		if (_Buckets != NULL)
+		if (NewBuckets != NULL)
 		{
-			Buckets = _Buckets;
-			BucketCount = nbuckets;
+			Buckets = NewBuckets;
+			BucketCount = NewBucketCount;
 		}
 
 		if (Buckets)
@@ -193,22 +191,22 @@ private:
 			}
 		}
 
-		return (_Buckets == NULL) ? -1 : 0;
+		return (NewBuckets == NULL) ? -1 : 0;
 	}
 
 
 	StringHashNode **GetReference(const char *Key)
 	{
-		uint32_t hash = HashValue(Key);
+		uint32_t Hash = HashValue(Key);
 		StringHashNode **Next;
 
 		if (BucketCount > 0)
 		{
-			Next = &Buckets[GetBucketIndex(hash)];
+			Next = &Buckets[GetBucketIndex(Hash)];
 
 			while (*Next)
 			{
-				if ((*Next)->Hash == hash && !strcmp((*Next)->Key, Key))
+				if ((*Next)->Hash == Hash && !strcmp((*Next)->Key, Key))
 					return Next;
 
 				Next = &(*Next)->Next;

@@ -27,14 +27,14 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v120</PlatformToolset>
     <CharacterSet>NotSet</CharacterSet>
     <WholeProgramOptimization>false</WholeProgramOptimization>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v120</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>NotSet</CharacterSet>
   </PropertyGroup>
@@ -119,6 +119,7 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <AssemblerOutput>AssemblyAndSourceCode</AssemblerOutput>
       <ErrorReporting>None</ErrorReporting>
+      <SupportJustMyCode>false</SupportJustMyCode>
     </ClCompile>
     <Link>
       <LinkErrorReporting>NoErrorReport</LinkErrorReporting>
@@ -151,11 +152,13 @@
       <Optimization>Full</Optimization>
       <WarningLevel>Level4</WarningLevel>
       <ShowIncludes>false</ShowIncludes>
+      <SupportJustMyCode>false</SupportJustMyCode>
     </ClCompile>
     <Link>
       <SubSystem>NotSet</SubSystem>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <LinkErrorReporting>NoErrorReport</LinkErrorReporting>
+      <IgnoreEmbeddedIDL />
     </Link>
     <ProjectReference>
       <LinkLibraryDependencies>true</LinkLibraryDependencies>

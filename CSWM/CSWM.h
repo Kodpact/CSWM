@@ -90,7 +90,10 @@ enum WType
 
 enum WForward
 {
+	SpawnPre,
 	SpawnPost,
+	DeployPre,
+	DeployPrePost,
 	DeployPost,
 	PrimaryAttackPre,
 	PrimaryAttackPrePost,
@@ -103,6 +106,7 @@ enum WForward
 	DropPost,
 	DamagePre,
 	DamagePost,
+	MAX_WEAPON_FORWARDS,
 };
 
 enum WReturn
@@ -163,7 +167,6 @@ enum WLimit
 {
 	MAX_WEAPON_TYPES = 4,
 	MAX_HOOKS = 12,
-	MAX_WEAPON_FORWARDS = 13,
 	MAX_MODEL_NAME = 24,
 	MAX_MODEL_PATH_NAME = 64,
 };
@@ -182,8 +185,8 @@ enum WAttack2
 	A2_Zoom,
 	A2_Switch,
 	A2_Burst,
-	A2_AutoPistol,
 	A2_MultiShot,
+	A2_AutoPistol,
 	A2_KnifeAttack,
 	A2_InstaSwitch,
 	A2_ZoomCustom,
@@ -335,7 +338,7 @@ enum ZoomType
 	CS_SECOND_AWP_ZOOM = 10,
 	CS_SECOND_NONAWP_ZOOM = 15,
 	CS_FIRST_ZOOM = 40,
-	CS_AUGSG552_ZOOM = 54,
+	CS_AUGSG552_ZOOM = 55,
 	CS_NO_ZOOM = 90,
 };
 
@@ -359,11 +362,14 @@ enum WFlag
 	AutoSniper = BIT(6),
 	CustomIdleAnim = BIT(7),
 	SoloClip = BIT(8),
+	DisableReload = BIT(9),
+	ReloadKeepFOV = BIT(10),
 
 	Zoom_NoSound = BIT(10),
 	ZoomCustom_NoSound = BIT(10),
 	SwitchMode_BarTime = BIT(10),
 	SwitchMode_NoText = BIT(11),
+	AutoPistol_NoSceenShake = BIT(10),
 	KnifeAttack_ScreenShake = BIT(10),
 	KnifeAttack_Penetration = BIT(11),
 	KnifeAttack_Accurate = BIT(12),
@@ -476,8 +482,8 @@ extern size_t PEV_Offset;
 
 // CSWM.cpp
 
-void GiveWeaponByName(edict_t *PlayerEdict, const char *Name);
-void GiveWeapon(edict_t *PlayerEdict, int Index);
+edict_t *GiveWeaponByName(edict_t *PlayerEdict, const char *Name);
+edict_t *GiveWeapon(edict_t *PlayerEdict, int Index);
 void UpdateAmmoList();
 void SendWeaponAnim(CBasePlayerWeapon *BaseWeapon, int Anim);
 cell ShootProjectileTimed(edict_t *LauncherEdict, int ProjectileID);
@@ -487,7 +493,6 @@ int Player_GiveAmmoByID(CBasePlayer *BasePlayer, int AmmoID, int Amount);
 void PlayerKnockback(edict_t *VictimEdict, Vector &Origin);
 BOOL InViewCone(edict_t *PlayerEdict, Vector &Origin, BOOL Accurate);
 BOOL InViewCone(Vector &SelfOrigin, Vector &VAngles, float FOV, Vector &Origin, BOOL Accurate);
-void StatusIconNumber(edict_t *PlayerEdict, BOOL Status, char Number);
 
 // Attack2-CSWM.cpp
 
@@ -505,7 +510,7 @@ static void Attack2_ZoomCustom(CBasePlayer *BasePlayer, CBasePlayerWeapon *BaseW
 void LoadAmmos(void);
 void LoadWeapons(void);
 void SetAnimation(edict_t *PlayerEdict, int Animation, Activity ACT, float FrameRate);
-void CheckAmmo(CAmmo &Ammo, const char *Name);
+void CheckAmmo(CAmmo &Ammo, int Index);
 void CheckWeapon(CWeapon &Weapon);
 void RecordWeaponDurationList(CWeapon &Weapon);
 
